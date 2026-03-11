@@ -1,0 +1,17 @@
+[
+  {
+    "id": "1773163691182",
+    "title": "test",
+    "description": "test",
+    "type": "workshop",
+    "points": 10,
+    "slots": 50,
+    "registeredCount": 1,
+    "registrationDeadline": "2026-03-12",
+    "eventDate": "2026-03-11",
+    "location": "r001",
+    "status": "completed",
+    "createdAt": "2026-03-10T17:28:11.182Z",
+    "posterUrl": "/api/uploads/events/test-1773163691182.png"
+  }
+]

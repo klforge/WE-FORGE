@@ -1,0 +1,147 @@
+/* Overlay */
+.expandable-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 50;
+}
+
+/* Expanded card wrapper */
+.expandable-card-wrapper {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+/* Expanded card */
+.expandable-card-expanded {
+  width: 100%;
+  max-width: 500px;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.expandable-card-expanded__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+}
+
+.expandable-card-expanded__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.expandable-card-expanded__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.expandable-card-expanded__role {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.expandable-card-expanded__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  background: #22c55e;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.expandable-card-expanded__btn:hover {
+  background: #16a34a;
+}
+
+.expandable-card-expanded__content {
+  padding: 0 24px 24px;
+}
+
+.expandable-card-expanded__description {
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Card list */
+.expandable-card-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Individual card item (collapsed) */
+.expandable-card-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.expandable-card-item:hover {
+  background: #1a1a1a;
+}
+
+.expandable-card-item__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.expandable-card-item__name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.expandable-card-item__role {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 0;
+}
+
+.expandable-card-item__btn {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: #fff;
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.expandable-card-item__btn:hover {
+  background: #e5e5e5;
+  border-color: rgba(255, 255, 255, 0.3);
+}

@@ -1,0 +1,54 @@
+/* ──────────────────────────────────────────────
+   Text Flip Component
+   ────────────────────────────────────────────── */
+
+.text-flip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  white-space: nowrap;
+}
+
+.text-flip__static {
+  color: #8b0000;
+}
+
+/* ──────────────────────────────────────────────
+   The rounded box that holds the flipping word
+   ────────────────────────────────────────────── */
+
+.text-flip__box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 0.08em 0.4em;
+  min-width: 5ch;
+  height: 1.4em;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ──────────────────────────────────────────────
+   Flip animation
+   ────────────────────────────────────────────── */
+
+.text-flip__word {
+  display: inline-block;
+  color: #ffffff;
+  font-weight: 800;
+  animation: flipIn 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes flipIn {
+  0% {
+    opacity: 0;
+    transform: translateY(80%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
