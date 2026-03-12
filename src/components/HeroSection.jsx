@@ -3,7 +3,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import TextFlip from './TextFlip';
 import './HeroSection.css';
-import heroImage from '../assets/20260226_162221.jpg';
+import heroImage from '../assets/herosection.jpg';
 
 gsap.registerPlugin(ScrollTrigger);
 
