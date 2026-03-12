@@ -1,0 +1,76 @@
+.club-intro {
+  width: 100%;
+  padding: 100px 20px;
+  background: #000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-bottom: none;
+  border-radius: 28px 28px 0 0;
+  margin-top: -40px;
+}
+
+.club-intro__container {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.club-intro__eyebrow {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+}
+
+/* Optional: Adding a very subtle reddish/brand color to match the reference "ZeroOne" vibe, but dark mode adapted */
+.club-intro__eyebrow {
+  background: linear-gradient(90deg, #ff4b4b, #ff7676);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.club-intro__heading {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* The highlight text uses a sleek, icy or metallic gradient for contrast */
+.club-intro__highlight {
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.4) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.club-intro__subheading {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 600px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive constraints */
+@media (max-width: 768px) {
+  .club-intro {
+    padding: 60px 20px;
+  }
+  
+  .club-intro__container {
+    gap: 16px;
+  }
+}

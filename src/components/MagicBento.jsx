@@ -2,6 +2,7 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './MagicBento.css';
+import PixelSnow from './PixelSnow';
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
@@ -35,7 +36,7 @@ const cardData = [
     title: 'Automation',
     description: 'Streamline workflows',
     label: 'domains',
-    route: null
+    route: '/domains'
   },
   {
     color: '#0a0a0a',
@@ -199,8 +200,26 @@ const ParticleCard = ({
 };
 
 const BentoCardGrid = ({ children, gridRef }) => (
-  <div className="card-grid bento-section" ref={gridRef}>
-    {children}
+  <div className="bento-section" style={{ position: 'relative' }}>
+    <div style={{ position: 'absolute', inset: '-48px -20px -84px -20px', zIndex: 0, pointerEvents: 'none', borderRadius: '28px 28px 0 0', overflow: 'hidden' }}>
+      <PixelSnow 
+        color="#ffffff"
+        flakeSize={0.01}
+        minFlakeSize={1.25}
+        pixelResolution={200}
+        speed={1.25}
+        density={0.3}
+        direction={125}
+        brightness={1}
+        depthFade={8}
+        farPlane={20}
+        gamma={0.4545}
+        variant="square"
+      />
+    </div>
+    <div className="card-grid" ref={gridRef} style={{ position: 'relative', zIndex: 1 }}>
+      {children}
+    </div>
   </div>
 );
 

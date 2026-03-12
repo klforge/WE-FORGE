@@ -10,6 +10,9 @@ import ProfilePage from './pages/ProfilePage';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import Footer from './components/Footer';
+import DomainsPage from './pages/DomainsPage';
+import FAQPage from './pages/FAQPage';
+import ClubIntro from './components/ClubIntro';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -19,6 +22,7 @@ function HomePage() {
       {/* Navbar can be added here later */}
       <HeroSection />
       <div className="hero-spacer" />
+      <ClubIntro />
       <section className="bento-wrapper">
         <MagicBento
           textAutoHide={true}
@@ -69,6 +73,8 @@ function App() {
       <Route path="/team" element={<TeamPage />} />
       <Route path="/admin" element={<AdminLogin />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
+      <Route path="/domains" element={<DomainsPage />} />
+      <Route path="/faq" element={<FAQPage />} />
       <Route path="/:memberId" element={<ProfilePage />} />
     </Routes>
   );

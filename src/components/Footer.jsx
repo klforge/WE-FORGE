@@ -36,7 +36,7 @@ const Footer = () => {
           <div className="site-footer__col">
             <h4>Resources</h4>
             <a href="/#">Newsletter</a>
-            <a href="/#">FAQ</a>
+            <a href="/faq" onClick={(e) => { e.preventDefault(); navigate('/faq'); }}>FAQ</a>
           </div>
           <div className="site-footer__col">
             <h4>Contact Us</h4>

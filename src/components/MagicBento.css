@@ -7,10 +7,11 @@
 .card-grid {
   display: grid;
   gap: 0.5em;
-  padding: 0.5em;
+  padding: 2em 0.5em;
   max-width: 44em;
   margin: 0 auto;
   font-size: clamp(0.85rem, 0.8rem + 0.4vw, 1.2rem);
+  position: relative;
 }
 
 .magic-bento-card {
@@ -28,6 +29,7 @@
   background: #0a0a0a;
   font-weight: 300;
   overflow: hidden;
+  z-index: 1;
 }
 
 .magic-bento-card__inner {
