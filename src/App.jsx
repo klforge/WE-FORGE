@@ -22,8 +22,7 @@ function HomePage() {
       {/* Navbar can be added here later */}
       <HeroSection />
       <div className="hero-spacer" />
-      <ClubIntro />
-      <section className="bento-wrapper">
+      <ClubIntro>
         <MagicBento
           textAutoHide={true}
           enableStars
@@ -37,7 +36,7 @@ function HomePage() {
           glowColor="255, 255, 255"
           disableAnimations={false}
         />
-      </section>
+      </ClubIntro>
       <div className="footer-separator" />
       <Footer />
     </div>

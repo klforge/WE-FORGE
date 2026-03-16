@@ -2,7 +2,6 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import './MagicBento.css';
-import PixelSnow from './PixelSnow';
 
 const DEFAULT_PARTICLE_COUNT = 12;
 const DEFAULT_SPOTLIGHT_RADIUS = 300;
@@ -12,43 +11,43 @@ const MOBILE_BREAKPOINT = 768;
 const cardData = [
   {
     color: '#0a0a0a',
-    title: 'Analytics',
-    description: 'Track user behavior',
-    label: 'faculties',
+    title: 'Faculty Mentors',
+    description: 'Guidance from mentors shaping strong technical foundations.',
+    label: 'Faculties',
     route: null
   },
   {
     color: '#0a0a0a',
-    title: 'Dashboard',
-    description: 'Centralized data view',
-    label: 'notices',
+    title: 'Notice Board',
+    description: 'Announcements, updates, and quick campus coordination.',
+    label: 'Notices',
     route: null
   },
   {
     color: '#0a0a0a',
-    title: 'Collaboration',
-    description: 'Work together seamlessly',
+    title: 'Core Team',
+    description: 'Meet the builders organizing workshops, sprints, and launches.',
     label: 'Team',
     route: '/team'
   },
   {
     color: '#0a0a0a',
-    title: 'Automation',
-    description: 'Streamline workflows',
-    label: 'domains',
+    title: 'Learning Domains',
+    description: 'Explore focused tracks across design, development, and systems.',
+    label: 'Domains',
     route: '/domains'
   },
   {
     color: '#0a0a0a',
-    title: 'Register & Attend',
-    description: 'Workshops, hackathons & more',
-    label: 'events',
+    title: 'Events & Workshops',
+    description: 'Join hackathons, sessions, demos, and collaborative build days.',
+    label: 'Events',
     route: '/events'
   },
   {
     color: '#0a0a0a',
-    title: 'Club Projects',
-    description: 'Built by KLForge members',
+    title: 'Built Projects',
+    description: 'See what the community has designed, shipped, and improved together.',
     label: 'Projects',
     route: '/projects'
   }
@@ -200,24 +199,8 @@ const ParticleCard = ({
 };
 
 const BentoCardGrid = ({ children, gridRef }) => (
-  <div className="bento-section" style={{ position: 'relative' }}>
-    <div style={{ position: 'absolute', inset: '-48px -20px -84px -20px', zIndex: 0, pointerEvents: 'none', borderRadius: '28px 28px 0 0', overflow: 'hidden' }}>
-      <PixelSnow 
-        color="#ffffff"
-        flakeSize={0.01}
-        minFlakeSize={1.25}
-        pixelResolution={200}
-        speed={1.25}
-        density={0.3}
-        direction={125}
-        brightness={1}
-        depthFade={8}
-        farPlane={20}
-        gamma={0.4545}
-        variant="square"
-      />
-    </div>
-    <div className="card-grid" ref={gridRef} style={{ position: 'relative', zIndex: 1 }}>
+  <div className="bento-section">
+    <div className="card-grid" ref={gridRef}>
       {children}
     </div>
   </div>

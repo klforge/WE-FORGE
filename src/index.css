@@ -28,18 +28,6 @@ body {
   position: relative;
 }
 
-.bento-wrapper {
-  position: relative;
-  z-index: 2;
-  background: #000000;
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  border-bottom: none;
-  border-radius: 28px 28px 0 0;
-  padding: 48px 20px 84px;
-  min-height: auto;
-  margin-top: -40px;
-}
-
 /* Separator between content and footer */
 .footer-separator {
   height: 1px;

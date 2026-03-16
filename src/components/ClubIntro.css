@@ -1,7 +1,9 @@
 .club-intro {
   width: 100%;
-  padding: 100px 20px;
-  background: #000;
+  padding: 108px 20px 84px;
+  background:
+    radial-gradient(circle at top, rgba(135, 22, 22, 0.08), transparent 34%),
+    linear-gradient(180deg, #070707 0%, #000000 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -9,33 +11,30 @@
   position: relative;
   z-index: 10;
   border: 2px solid rgba(255, 255, 255, 0.15);
-  border-bottom: none;
-  border-radius: 28px 28px 0 0;
+  border-radius: 28px;
   margin-top: -40px;
+  overflow: hidden;
 }
 
 .club-intro__container {
-  max-width: 900px;
+  width: min(1180px, 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
 }
 
 .club-intro__eyebrow {
   font-size: 1.1rem;
   font-weight: 500;
   letter-spacing: 0.05em;
-  color: rgba(255, 255, 255, 0.5);
+  color: #d64a4a;
   text-transform: uppercase;
 }
 
-/* Optional: Adding a very subtle reddish/brand color to match the reference "ZeroOne" vibe, but dark mode adapted */
 .club-intro__eyebrow {
-  background: linear-gradient(90deg, #ff4b4b, #ff7676);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  background: none;
+  -webkit-text-fill-color: currentColor;
 }
 
 .club-intro__heading {
@@ -64,13 +63,65 @@
   line-height: 1.5;
 }
 
+.club-intro__stats {
+  width: min(860px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.club-intro__stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  min-height: 132px;
+}
+
+.club-intro__stat-label {
+  font-size: 0.86rem;
+  color: #d64a4a;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+}
+
+.club-intro__stat-value {
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.05em;
+  text-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+.club-intro__bento {
+  width: 100%;
+  margin-top: 8px;
+}
+
 /* Responsive constraints */
 @media (max-width: 768px) {
   .club-intro {
-    padding: 60px 20px;
+    padding: 72px 16px 56px;
   }
   
   .club-intro__container {
     gap: 16px;
+  }
+
+  .club-intro__stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .club-intro__stat-card {
+    min-height: 96px;
+  }
+
+  .club-intro__stat-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
   }
 }
