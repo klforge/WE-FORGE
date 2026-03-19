@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -41,12 +41,7 @@ function HomePage() {
 }
 
 function App() {
-  const location = useLocation();
-
   useEffect(() => {
-    // Disable Lenis on admin routes to prevent scroll hijacking
-    if (location.pathname.startsWith('/admin')) return;
-
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -61,7 +56,7 @@ function App() {
       gsap.ticker.remove(lenis.raf);
       lenis.destroy();
     };
-  }, [location.pathname]);
+  }, []);
 
   return (
     <Routes>
