@@ -1,15 +1,25 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { Bell } from 'lucide-react';
 import TextFlip from './TextFlip';
+import noticeService from '../services/noticeService';
 import './HeroSection.css';
-import heroImage from '../assets/herosection.jpg';
 
 gsap.registerPlugin(ScrollTrigger);
 
 const HeroSection = () => {
   const heroRef = useRef(null);
   const cardRef = useRef(null);
+  const [latestNotice, setLatestNotice] = useState(null);
+
+  useEffect(() => {
+    noticeService.getAll().then(data => {
+      if (data && data.length > 0) {
+        setLatestNotice(data[0]);
+      }
+    }).catch(console.error);
+  }, []);
 
   useEffect(() => {
     const el = heroRef.current;
@@ -56,7 +66,7 @@ const HeroSection = () => {
         <div className="hero__image-wrapper">
           <img
             className="hero__image"
-            src={heroImage}
+            src="/images/herosection.jpg"
             alt="Children looking at camera"
           />
           <div className="hero__overlay" />
@@ -64,6 +74,19 @@ const HeroSection = () => {
           {/* Text overlay */}
           <div className="hero__content">
             <div className="hero__text">
+              {/* Notice Toast */}
+              {latestNotice && (
+                <div className="hero__notice-wrapper">
+                  <a href="/notices" className="hero__notice-toast">
+                    <span className="hero__notice-icon">
+                      <Bell size={14} />
+                    </span>
+                    <span className="hero__notice-title">{latestNotice.title}&nbsp;</span>
+                    <span className="hero__notice-msg">— {latestNotice.message}</span>
+                    <span className="hero__notice-arrow">→</span>
+                  </a>
+                </div>
+              )}
               <h1 className="hero__heading">
                 <span className="hero__label">WE ARE </span>
                 <TextFlip

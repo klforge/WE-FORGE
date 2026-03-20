@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Calendar, Clock, MapPin, Users, CheckCircle, CalendarDays } from 'lucide-react';
 import eventService from '../services/eventService';
+import BackButton from '../components/BackButton';
 import './EventsPage.css';
 
-const LS_KEY = 'klforge_registered_events'; // localStorage key
-
+const LS_KEY = 'klforge_registered_events';
 const getRegistered = () => {
     try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
 };
@@ -25,7 +26,7 @@ const TYPE_COLORS = {
 const STATUS_LABELS = {
     upcoming: { label: 'Upcoming', cls: 'events-page__status--upcoming' },
     ongoing: { label: 'Ongoing', cls: 'events-page__status--ongoing' },
-    completed: { label: 'Completed', cls: 'events-page__status--completed' },
+    completed: { label: 'Ended', cls: 'events-page__status--completed' },
 };
 
 const fmt = (iso) =>
@@ -33,7 +34,8 @@ const fmt = (iso) =>
 
 const EMPTY_REG = { name: '', rollNumber: '', email: '' };
 
-const EventCard = ({ event, alreadyRegistered, onRegistered }) => {
+/* ── Individual Event Card ── */
+const EventCard = ({ event, alreadyRegistered, onRegistered, onViewDetail }) => {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(EMPTY_REG);
     const [submitting, setSubmitting] = useState(false);
@@ -41,10 +43,15 @@ const EventCard = ({ event, alreadyRegistered, onRegistered }) => {
 
     const slotsLeft = event.slots - event.registeredCount;
     const deadlinePast = new Date(event.registrationDeadline) < new Date();
-    const canRegister = !deadlinePast && slotsLeft > 0 && event.status !== 'completed' && !alreadyRegistered;
+
+    const isCollegeEmail = (val) => /@kluniversity\.in$/i.test(val);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!isCollegeEmail(form.email)) {
+             setResult({ ok: false, msg: 'Invalid email. Use your college email only' });
+             return;
+        }
         setSubmitting(true);
         setResult(null);
         try {
@@ -60,15 +67,14 @@ const EventCard = ({ event, alreadyRegistered, onRegistered }) => {
         }
     };
 
+    const isEnded = event.status === 'ended';
+    const canRegister = !deadlinePast && slotsLeft > 0 && !isEnded && !alreadyRegistered;
+
     const btnLabel = alreadyRegistered
         ? 'Already Registered ✓'
-        : deadlinePast
-            ? 'Registration Closed'
-            : slotsLeft === 0
-                ? 'Fully Booked'
-                : event.status === 'completed'
-                    ? 'Event Ended'
-                    : 'Register Now';
+        : deadlinePast ? 'Registration Closed'
+            : slotsLeft === 0 ? 'Fully Booked'
+                : 'Register Now';
 
     return (
         <div className="events-page__card">
@@ -88,69 +94,76 @@ const EventCard = ({ event, alreadyRegistered, onRegistered }) => {
 
                 <div className="events-page__meta-grid">
                     <div className="events-page__meta-item">
-                        <span className="events-page__meta-label">📅 Event Date</span>
+                        <span className="events-page__meta-label"><Calendar size={14} className="events-icon" /> Event Date</span>
                         <span className="events-page__meta-value">{fmt(event.eventDate)}</span>
                     </div>
                     <div className="events-page__meta-item">
-                        <span className="events-page__meta-label">⏰ Deadline</span>
+                        <span className="events-page__meta-label"><Clock size={14} className="events-icon" /> Deadline</span>
                         <span className="events-page__meta-value">{fmt(event.registrationDeadline)}</span>
                     </div>
-                    {event.location && (
+                    {(event.venue || event.location) && (
                         <div className="events-page__meta-item">
-                            <span className="events-page__meta-label">📍 Location</span>
-                            <span className="events-page__meta-value">{event.location}</span>
+                            <span className="events-page__meta-label"><MapPin size={14} className="events-icon" /> Venue</span>
+                            <span className="events-page__meta-value">{event.venue || event.location}</span>
                         </div>
                     )}
                     <div className="events-page__meta-item">
-                        <span className="events-page__meta-label">⭐ Points</span>
-                        <span className="events-page__meta-value">{event.points}</span>
-                    </div>
-                    <div className="events-page__meta-item">
-                        <span className="events-page__meta-label">🪑 Slots</span>
+                        <span className="events-page__meta-label"><Users size={14} className="events-icon" /> Slots</span>
                         <span className={`events-page__meta-value ${slotsLeft === 0 ? 'events-page__meta-value--danger' : ''}`}>
                             {slotsLeft > 0 ? `${slotsLeft} of ${event.slots} left` : 'Full'}
                         </span>
                     </div>
                 </div>
 
-                {!showForm ? (
-                    <button
-                        className={`events-page__register-btn ${!canRegister ? 'events-page__register-btn--disabled' : ''} ${alreadyRegistered ? 'events-page__register-btn--done' : ''}`}
-                        onClick={() => canRegister && setShowForm(true)}
-                        disabled={!canRegister}
-                    >
-                        {btnLabel}
+                <div className="events-page__card-actions">
+                    <button className="events-page__detail-btn" onClick={() => onViewDetail(event.id)}>
+                        View Details →
                     </button>
-                ) : (
-                    <form className="events-page__reg-form" onSubmit={handleSubmit}>
-                        <div className="events-page__reg-form-header">
-                            <h3>Register for {event.title}</h3>
-                            <button type="button" className="events-page__reg-close" onClick={() => { setShowForm(false); setResult(null); }}>✕</button>
-                        </div>
-                        <input required placeholder="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-                        <input required placeholder="Roll Number" value={form.rollNumber} onChange={e => setForm({ ...form, rollNumber: e.target.value })} />
-                        <input required type="email" placeholder="Email Address" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-                        {result && (
-                            <div className={`events-page__reg-result ${result.ok ? 'events-page__reg-result--ok' : 'events-page__reg-result--err'}`}>
-                                {result.msg}
-                            </div>
-                        )}
-                        <button type="submit" className="events-page__register-btn" disabled={submitting || result?.ok}>
-                            {submitting ? 'Submitting...' : 'Confirm Registration'}
+                    {!isEnded ? (
+                        !showForm ? (
+                            <button
+                                className={`events-page__register-btn ${!canRegister ? 'events-page__register-btn--disabled' : ''} ${alreadyRegistered ? 'events-page__register-btn--done' : ''}`}
+                                onClick={() => canRegister && setShowForm(true)}
+                                disabled={!canRegister}
+                            >
+                                {btnLabel}
+                            </button>
+                        ) : (
+                            <form className="events-page__reg-form" onSubmit={handleSubmit}>
+                                <div className="events-page__reg-form-header">
+                                    <h3>Register for {event.title}</h3>
+                                    <button type="button" className="events-page__reg-close" onClick={() => { setShowForm(false); setResult(null); }}>✕</button>
+                                </div>
+                                <input required placeholder="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+                                <input required placeholder="Roll Number" value={form.rollNumber} onChange={e => setForm({ ...form, rollNumber: e.target.value })} />
+                                <input required type="email" placeholder="College Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                                {result && (
+                                    <div className={`events-page__reg-result ${result.ok ? 'events-page__reg-result--ok' : 'events-page__reg-result--err'}`}>
+                                        {result.msg}
+                                    </div>
+                                )}
+                                <button type="submit" className="events-page__register-btn" disabled={submitting || result?.ok}>
+                                    {submitting ? 'Submitting...' : 'Confirm Registration'}
+                                </button>
+                            </form>
+                        )
+                    ) : (
+                        <button className="events-page__register-btn events-page__register-btn--disabled" disabled>
+                            Event Ended
                         </button>
-                    </form>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
+/* ── Main Events Page ── */
 const EventsPage = () => {
     const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [filter, setFilter] = useState('all');
     const [registered, setRegistered] = useState(getRegistered);
 
     useEffect(() => {
@@ -162,43 +175,47 @@ const EventsPage = () => {
 
     const handleRegistered = (eventId) => {
         setRegistered(prev => ({ ...prev, [eventId]: true }));
-        // Optimistically increment count
         setEvents(prev => prev.map(e => e.id === eventId ? { ...e, registeredCount: e.registeredCount + 1 } : e));
     };
 
-    const filtered = filter === 'all' ? events : events.filter(e => e.status === filter);
+    const handleViewDetail = (eventId) => {
+        navigate(`/events/${encodeURIComponent(eventId)}`);
+    };
 
     return (
         <div className="events-page">
             <div className="events-page__topbar">
-                <button className="events-page__back" onClick={() => navigate('/')}>← Back</button>
+                <BackButton />
             </div>
             <div className="events-page__header">
                 <h1 className="events-page__title">Club Events</h1>
-                <p className="events-page__subtitle">Register for upcoming workshops, hackathons, and more</p>
+                <p className="events-page__subtitle">Workshops, hackathons, talks and more</p>
             </div>
-            <div className="events-page__filters">
-                {['all', 'upcoming', 'ongoing', 'completed'].map(f => (
-                    <button key={f} className={`events-page__filter-btn ${filter === f ? 'events-page__filter-btn--active' : ''}`} onClick={() => setFilter(f)}>
-                        {f.charAt(0).toUpperCase() + f.slice(1)}
-                    </button>
-                ))}
-            </div>
+
             {loading && <div className="events-page__loading">Loading events...</div>}
             {error && <div className="events-page__error">{error}</div>}
-            {!loading && !error && filtered.length === 0 && (
-                <div className="events-page__empty">{filter === 'all' ? 'No events yet. Check back soon!' : `No ${filter} events.`}</div>
+
+            {!loading && !error && (
+                <div className="events-page__section">
+                    {!events.length ? (
+                        <div style={{ padding: '40px 24px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.95rem' }}>
+                            No events to show right now.
+                        </div>
+                    ) : (
+                        <div className="events-page__grid">
+                            {events.map(event => (
+                                <EventCard
+                                    key={event.id}
+                                    event={event}
+                                    alreadyRegistered={!!registered[event.id]}
+                                    onRegistered={handleRegistered}
+                                    onViewDetail={handleViewDetail}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
             )}
-            <div className="events-page__grid">
-                {filtered.map(event => (
-                    <EventCard
-                        key={event.id}
-                        event={event}
-                        alreadyRegistered={!!registered[event.id]}
-                        onRegistered={handleRegistered}
-                    />
-                ))}
-            </div>
         </div>
     );
 };

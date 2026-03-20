@@ -91,3 +91,15 @@
   opacity: 0.4;
   cursor: not-allowed;
 }
+
+/* Responsive constraints */
+@media (max-width: 480px) {
+  .admin-login {
+    padding: 16px;
+  }
+  
+  .admin-login__form {
+    padding: 32px 24px;
+    border-radius: 16px;
+  }
+}

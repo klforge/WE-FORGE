@@ -129,6 +129,77 @@
 }
 
 /* ──────────────────────────────────────────────
+   Hero Notice Toast
+   ────────────────────────────────────────────── */
+
+.hero__notice-wrapper {
+  margin-bottom: 24px;
+  animation: slideUp 0.8s ease-out 0.2s both;
+}
+
+.hero__notice-toast {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 16px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  max-width: 100%;
+}
+
+.hero__notice-toast:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15);
+}
+
+.hero__notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fd0000;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.hero__notice-title {
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.hero__notice-msg {
+  color: rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero__notice-arrow {
+  color: #ffffff;
+  font-weight: bold;
+  margin-left: 8px;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+}
+
+.hero__notice-toast:hover .hero__notice-arrow {
+  transform: translateX(3px);
+}
+
+/* ──────────────────────────────────────────────
    Text + Card Content Layer
    ────────────────────────────────────────────── */
 
@@ -319,5 +390,20 @@
     min-width: unset;
     width: 100%;
     max-width: 300px;
+  }
+
+  .hero__notice-wrapper {
+    margin-bottom: 20px;
+  }
+
+  .hero__notice-toast {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .hero__notice-msg {
+    display: none;
+    /* Hide long message on tiny screens, show only title */
   }
 }

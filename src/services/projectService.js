@@ -14,9 +14,8 @@ const projectService = {
     async create(data) {
         const res = await fetch(`${API_BASE}/projects`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify(data),
+            body: data,
         });
         if (!res.ok) {
             const json = await safeJson(res);
@@ -28,9 +27,8 @@ const projectService = {
     async update(id, data) {
         const res = await fetch(`${API_BASE}/projects/${encodeURIComponent(id)}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify(data),
+            body: data,
         });
         if (!res.ok) {
             const json = await safeJson(res);

@@ -4,6 +4,47 @@ import { useOutsideClick } from "../hooks/useOutsideClick";
 import { useNavigate } from "react-router-dom";
 import "./ExpandableCard.css";
 
+const cardVariants = {
+  hidden: { 
+    opacity: 0, 
+    clipPath: "inset(0% 85% 0% 0% round 14px)" 
+  },
+  visible: (i) => ({
+    opacity: 1,
+    clipPath: "inset(0% 0% 0% 0% round 14px)",
+    transition: {
+      opacity: { delay: i * 0.15, duration: 0.4, ease: "easeOut" },
+      clipPath: { delay: (i * 0.15) + 0.2, duration: 1.0, ease: [0.16, 1, 0.3, 1] }
+    }
+  })
+};
+
+const contentVariants = {
+  hidden: { opacity: 0, y: 5 },
+  visible: (i) => ({
+    opacity: 1,
+    y: 0,
+    transition: {
+      delay: (i * 0.15) + 0.4,
+      duration: 0.6,
+      ease: "easeOut"
+    }
+  })
+};
+
+const buttonVariants = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: (i) => ({
+    opacity: 1,
+    scale: 1,
+    transition: {
+      delay: (i * 0.15) + 0.5,
+      duration: 0.5,
+      ease: [0.175, 0.885, 0.32, 1.275]
+    }
+  })
+};
+
 export function ExpandableCard({ cards }) {
   const [active, setActive] = useState(null);
   const ref = useRef(null);
@@ -100,14 +141,22 @@ export function ExpandableCard({ cards }) {
       </AnimatePresence>
 
       <ul className="expandable-card-list">
-        {cards.map((card) => (
+        {cards.map((card, index) => (
           <motion.li
             layoutId={`card-${card.name}-${id}`}
             key={`card-${card.name}-${id}`}
             onClick={() => setActive(card)}
             className="expandable-card-item"
+            custom={index}
+            initial="hidden"
+            animate="visible"
+            variants={cardVariants}
           >
-            <div className="expandable-card-item__content">
+            <motion.div 
+              className="expandable-card-item__content"
+              custom={index}
+              variants={contentVariants}
+            >
               <motion.h3
                 layoutId={`name-${card.name}-${id}`}
                 className="expandable-card-item__name"
@@ -120,13 +169,15 @@ export function ExpandableCard({ cards }) {
               >
                 {card.role}
               </motion.p>
-            </div>
+            </motion.div>
 
             <motion.button
               layoutId={`btn-${card.name}-${id}`}
               className="expandable-card-item__btn"
+              custom={index}
+              variants={buttonVariants}
             >
-              View
+              View Profile
             </motion.button>
           </motion.li>
         ))}

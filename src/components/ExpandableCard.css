@@ -58,17 +58,18 @@
   align-items: center;
   padding: 8px 20px;
   border-radius: 9999px;
-  background: #22c55e;
-  color: #fff;
+  background: #fff;
+  color: #000;
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .expandable-card-expanded__btn:hover {
-  background: #16a34a;
+  background: #e5e5e5;
+  transform: translateY(-1px);
 }
 
 .expandable-card-expanded__content {

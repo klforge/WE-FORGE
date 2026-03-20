@@ -1,0 +1,127 @@
+.club-intro {
+  width: 100%;
+  padding: 108px 20px 84px;
+  background:
+    radial-gradient(circle at top, rgba(135, 22, 22, 0.08), transparent 34%),
+    linear-gradient(180deg, #070707 0%, #000000 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 28px;
+  margin-top: -40px;
+  overflow: hidden;
+}
+
+.club-intro__container {
+  width: min(1180px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+.club-intro__eyebrow {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  color: #d9f92e;
+  text-transform: uppercase;
+}
+
+.club-intro__eyebrow {
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.club-intro__heading {
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #fff;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+/* The highlight text uses a sleek, icy or metallic gradient for contrast */
+.club-intro__highlight {
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.4) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.club-intro__subheading {
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  color: rgba(255, 255, 255, 0.6);
+  max-width: 600px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.club-intro__stats {
+  width: min(860px, 100%);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 8px;
+}
+
+.club-intro__stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  min-height: 132px;
+}
+
+.club-intro__stat-label {
+  font-size: 0.86rem;
+  color: #d9f92e;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+}
+
+.club-intro__stat-value {
+  font-size: clamp(2.6rem, 6vw, 4.4rem);
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.05em;
+  text-shadow: 0 12px 32px rgba(0, 0, 0, 0.38);
+}
+
+.club-intro__bento {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Responsive constraints */
+@media (max-width: 768px) {
+  .club-intro {
+    padding: 72px 16px 56px;
+  }
+  
+  .club-intro__container {
+    gap: 16px;
+  }
+
+  .club-intro__stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .club-intro__stat-card {
+    min-height: 96px;
+  }
+
+  .club-intro__stat-label {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+  }
+}

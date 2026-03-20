@@ -1,40 +1,26 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 const authMiddleware = require('../middleware/auth');
+const { upload, saveFile, deleteFile } = require('../lib/uploadHelper');
 
 const router = express.Router();
 const EVENTS_FILE = path.resolve(__dirname, '..', 'data', 'events.json');
-const REGS_FILE = path.resolve(__dirname, '..', 'data', 'registrations.json');
-const UPLOAD_DIR = path.resolve(__dirname, '..', 'uploads', 'events');
+const REGS_FILE   = path.resolve(__dirname, '..', 'data', 'registrations.json');
+const UPLOAD_DIR  = path.resolve(__dirname, '..', 'uploads', 'events');
 
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
-
-const upload = multer({
-    storage: multer.memoryStorage(),
-    limits: { fileSize: MAX_SIZE },
-    fileFilter: (_req, file, cb) => {
-        if (ALLOWED_MIME.includes(file.mimetype)) cb(null, true);
-        else cb(new Error('Only JPEG, PNG, and WebP images are allowed'));
-    },
-});
-
-const readJson = (f) => JSON.parse(fs.readFileSync(f, 'utf-8'));
+const readJson  = (f) => JSON.parse(fs.readFileSync(f, 'utf-8'));
 const writeJson = (f, d) => fs.writeFileSync(f, JSON.stringify(d, null, 2));
+const toSlug    = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-const toSlug = (str) =>
-    str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-// Sync status: mark past events as completed
+// Sync status: mark past events as ended
 const syncStatus = (events) => {
     const now = new Date();
     return events.map((e) => {
-        if (e.status !== 'completed' && new Date(e.eventDate) < now) {
-            return { ...e, status: 'completed' };
+        if (e.status !== 'ended' && new Date(e.eventDate) < now) {
+            return { ...e, status: 'ended' };
         }
         return e;
     });
@@ -42,17 +28,14 @@ const syncStatus = (events) => {
 
 // ─── Public ─────────────────────────────────────────────
 
-// GET /api/events
 router.get('/', (req, res) => {
     let events = readJson(EVENTS_FILE);
     events = syncStatus(events);
     writeJson(EVENTS_FILE, events);
-    // Sort: upcoming first, completed last
     events.sort((a, b) => new Date(a.eventDate) - new Date(b.eventDate));
     res.json(events);
 });
 
-// GET /api/events/:id
 router.get('/:id', (req, res) => {
     const events = readJson(EVENTS_FILE);
     const event = events.find((e) => e.id === req.params.id);
@@ -62,7 +45,6 @@ router.get('/:id', (req, res) => {
 
 // ─── Registration (public, validated) ───────────────────
 
-// POST /api/events/:id/register
 router.post('/:id/register', (req, res) => {
     const { name, rollNumber, email } = req.body;
     if (!name || !rollNumber || !email) {
@@ -110,27 +92,25 @@ router.post('/:id/register', (req, res) => {
 
 // ─── Admin ───────────────────────────────────────────────
 
-// POST /api/events
-router.post('/', authMiddleware, upload.single('poster'), (req, res) => {
+router.post('/', authMiddleware, upload.single('poster'), async (req, res) => {
     try {
-        const { title, description, type, points, slots, registrationDeadline, eventDate, location, status } = req.body;
+        const { title, description, type, points, slots, registrationDeadline, eventDate, venue, location, status } = req.body;
         if (!title || !eventDate) {
             return res.status(400).json({ error: 'Title and event date are required' });
         }
 
-        const events = readJson(EVENTS_FILE);
         const id = String(Date.now());
         const newEvent = {
             id,
             title: title.trim(),
             description: description?.trim() || '',
-            type: type || 'workshop',
+            type: type?.trim() || '',
             points: Number(points) || 0,
             slots: Number(slots) || 50,
             registeredCount: 0,
             registrationDeadline: registrationDeadline || eventDate,
             eventDate,
-            location: location?.trim() || '',
+            venue: (venue || location || '').trim(),
             status: status || 'upcoming',
             createdAt: new Date().toISOString(),
         };
@@ -139,10 +119,10 @@ router.post('/', authMiddleware, upload.single('poster'), (req, res) => {
             const slug = toSlug(title);
             const ext = req.file.mimetype === 'image/png' ? 'png' : req.file.mimetype === 'image/webp' ? 'webp' : 'jpg';
             const filename = `${slug}-${id}.${ext}`;
-            fs.writeFileSync(path.join(UPLOAD_DIR, filename), req.file.buffer);
-            newEvent.posterUrl = `/api/uploads/events/${filename}`;
+            newEvent.posterUrl = await saveFile(req.file.buffer, req.file.mimetype, 'events', UPLOAD_DIR, filename);
         }
 
+        const events = readJson(EVENTS_FILE);
         events.push(newEvent);
         writeJson(EVENTS_FILE, events);
         res.status(201).json(newEvent);
@@ -152,36 +132,32 @@ router.post('/', authMiddleware, upload.single('poster'), (req, res) => {
     }
 });
 
-// PUT /api/events/:id
-router.put('/:id', authMiddleware, upload.single('poster'), (req, res) => {
+router.put('/:id', authMiddleware, upload.single('poster'), async (req, res) => {
     try {
         const events = readJson(EVENTS_FILE);
         const idx = events.findIndex((e) => e.id === req.params.id);
         if (idx === -1) return res.status(404).json({ error: 'Event not found' });
 
         const updated = { ...events[idx] };
-        const { title, description, type, points, slots, registrationDeadline, eventDate, location, status } = req.body;
+        const { title, description, type, points, slots, registrationDeadline, eventDate, venue, location, status } = req.body;
 
-        if (title) updated.title = title.trim();
+        if (title)                  updated.title = title.trim();
         if (description !== undefined) updated.description = description.trim();
-        if (type) updated.type = type;
-        if (points !== undefined) updated.points = Number(points);
-        if (slots !== undefined) updated.slots = Number(slots);
-        if (registrationDeadline) updated.registrationDeadline = registrationDeadline;
-        if (eventDate) updated.eventDate = eventDate;
-        if (location !== undefined) updated.location = location.trim();
-        if (status) updated.status = status;
+        if (type !== undefined)     updated.type = type.trim();
+        if (points !== undefined)   updated.points = Number(points);
+        if (slots !== undefined)    updated.slots = Number(slots);
+        if (registrationDeadline)   updated.registrationDeadline = registrationDeadline;
+        if (eventDate)              updated.eventDate = eventDate;
+        if (venue !== undefined)    updated.venue = venue.trim();
+        else if (location !== undefined) updated.venue = location.trim();
+        if (status)                 updated.status = status;
 
         if (req.file) {
-            if (updated.posterUrl) {
-                const oldFile = path.join(UPLOAD_DIR, path.basename(updated.posterUrl));
-                if (fs.existsSync(oldFile)) fs.unlinkSync(oldFile);
-            }
+            await deleteFile(updated.posterUrl, UPLOAD_DIR);
             const slug = toSlug(updated.title);
             const ext = req.file.mimetype === 'image/png' ? 'png' : req.file.mimetype === 'image/webp' ? 'webp' : 'jpg';
             const filename = `${slug}-${updated.id}.${ext}`;
-            fs.writeFileSync(path.join(UPLOAD_DIR, filename), req.file.buffer);
-            updated.posterUrl = `/api/uploads/events/${filename}`;
+            updated.posterUrl = await saveFile(req.file.buffer, req.file.mimetype, 'events', UPLOAD_DIR, filename);
         }
 
         events[idx] = updated;
@@ -193,19 +169,13 @@ router.put('/:id', authMiddleware, upload.single('poster'), (req, res) => {
     }
 });
 
-// DELETE /api/events/:id
-router.delete('/:id', authMiddleware, (req, res) => {
+router.delete('/:id', authMiddleware, async (req, res) => {
     try {
         const events = readJson(EVENTS_FILE);
         const idx = events.findIndex((e) => e.id === req.params.id);
         if (idx === -1) return res.status(404).json({ error: 'Event not found' });
 
-        const event = events[idx];
-        if (event.posterUrl) {
-            const file = path.join(UPLOAD_DIR, path.basename(event.posterUrl));
-            if (fs.existsSync(file)) fs.unlinkSync(file);
-        }
-
+        await deleteFile(events[idx].posterUrl, UPLOAD_DIR);
         events.splice(idx, 1);
         writeJson(EVENTS_FILE, events);
         res.json({ success: true });
@@ -214,7 +184,6 @@ router.delete('/:id', authMiddleware, (req, res) => {
     }
 });
 
-// GET /api/events/:id/registrations
 router.get('/:id/registrations', authMiddleware, (req, res) => {
     const events = readJson(EVENTS_FILE);
     if (!events.find((e) => e.id === req.params.id)) {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authService from '../../services/authService';
+import { Lock } from 'lucide-react';
+import authService from '../services/authService';
 import './AdminLogin.css';
 
 const AdminLogin = () => {
@@ -26,7 +27,7 @@ const AdminLogin = () => {
   return (
     <div className="admin-login">
       <form className="admin-login__form" onSubmit={handleSubmit}>
-        <div className="admin-login__lock">🔒</div>
+        <div className="admin-login__lock"><Lock size={32} /></div>
         <h1 className="admin-login__title">Admin Access</h1>
         <p className="admin-login__subtitle">Enter password to continue</p>
 

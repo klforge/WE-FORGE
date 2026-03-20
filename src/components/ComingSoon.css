@@ -1,0 +1,78 @@
+.coming-soon-page {
+  min-height: 100vh;
+  background: #050508;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.coming-soon-page__topbar {
+  padding: 24px 32px;
+}
+
+.coming-soon-page__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.55);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.coming-soon-page__back:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.coming-soon-page__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px 120px;
+  text-align: center;
+}
+
+.coming-soon-page__icon {
+  color: rgba(125, 190, 255, 0.4);
+  margin-bottom: 24px;
+}
+
+.coming-soon-page__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 12px;
+  letter-spacing: -0.02em;
+}
+
+.coming-soon-page__message {
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.5);
+  max-width: 400px;
+  line-height: 1.6;
+}
+
+/* ── Cyan Theme variants ── */
+.coming-soon-page--cyan .coming-soon-page__icon {
+  color: rgba(34, 211, 238, 0.6);
+  filter: drop-shadow(0 0 16px rgba(34, 211, 238, 0.3));
+}
+
+.coming-soon-page--cyan .coming-soon-page__title {
+  text-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+}
+
+@media (max-width: 600px) {
+  .coming-soon-page__topbar {
+    padding: 16px;
+  }
+}

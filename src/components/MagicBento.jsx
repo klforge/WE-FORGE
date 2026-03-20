@@ -11,43 +11,43 @@ const MOBILE_BREAKPOINT = 768;
 const cardData = [
   {
     color: '#0a0a0a',
-    title: 'Analytics',
-    description: 'Track user behavior',
-    label: 'faculties',
-    route: null
+    title: 'Faculty Mentors',
+    description: 'Guidance from mentors shaping strong technical foundations.',
+    label: 'Faculties',
+    route: '/faculties'
   },
   {
     color: '#0a0a0a',
-    title: 'Dashboard',
-    description: 'Centralized data view',
-    label: 'notices',
-    route: null
+    title: 'Notice Board',
+    description: 'Announcements, updates, and quick campus coordination.',
+    label: 'Notices',
+    route: '/notices'
   },
   {
     color: '#0a0a0a',
-    title: 'Collaboration',
-    description: 'Work together seamlessly',
+    title: 'Core Team',
+    description: 'Meet the builders organizing workshops, sprints, and launches.',
     label: 'Team',
     route: '/team'
   },
   {
     color: '#0a0a0a',
-    title: 'Automation',
-    description: 'Streamline workflows',
-    label: 'domains',
-    route: null
+    title: 'Learning Domains',
+    description: 'Explore focused tracks across design, development, and systems.',
+    label: 'Domains',
+    route: '/domains'
   },
   {
     color: '#0a0a0a',
-    title: 'Register & Attend',
-    description: 'Workshops, hackathons & more',
-    label: 'events',
+    title: 'Events & Workshops',
+    description: 'Join hackathons, sessions, demos, and collaborative build days.',
+    label: 'Events',
     route: '/events'
   },
   {
     color: '#0a0a0a',
-    title: 'Club Projects',
-    description: 'Built by KLForge members',
+    title: 'Built Projects',
+    description: 'See what the community has designed, shipped, and improved together.',
     label: 'Projects',
     route: '/projects'
   }
@@ -199,8 +199,10 @@ const ParticleCard = ({
 };
 
 const BentoCardGrid = ({ children, gridRef }) => (
-  <div className="card-grid bento-section" ref={gridRef}>
-    {children}
+  <div className="bento-section">
+    <div className="card-grid" ref={gridRef}>
+      {children}
+    </div>
   </div>
 );
 
@@ -271,7 +273,6 @@ const MagicBento = ({
                   <div className="magic-bento-card__label">{card.label}</div>
                 </div>
                 <div className="magic-bento-card__content">
-                  <h2 className="magic-bento-card__title">{card.title}</h2>
                   <p className="magic-bento-card__description">{card.description}</p>
                 </div>
               </div>

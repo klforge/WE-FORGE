@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Trash2, Edit3, Plus, GripVertical, LogOut, X, Users, Calendar, FolderKanban, Bell, Globe, Send, Eye } from 'lucide-react';
+import { Trash2, Edit3, Plus, GripVertical, LogOut, X, Users, Calendar, FolderKanban, Bell, Globe, Send, Eye, ArrowUp, ArrowDown } from 'lucide-react';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import authService from '../../services/authService';
-import memberService, { getAvatarUrl } from '../../services/memberService';
-import eventService from '../../services/eventService';
-import noticeService from '../../services/noticeService';
-import projectService from '../../services/projectService';
+import authService from '../services/authService';
+import memberService, { getAvatarUrl } from '../services/memberService';
+import eventService from '../services/eventService';
+import noticeService from '../services/noticeService';
+import projectService from '../services/projectService';
 import './AdminDashboard.css';
 
 // ─── Helpers ──────────────────────────────────────────────
 
 const EMPTY_MEMBER_FORM = {
-  name: '', role: '', rollNumber: '', description: '', bio: '', skills: '', status: 'Online', telegram: '',
+  name: '', role: 'Tech and Innovation', rollNumber: '', description: '', bio: '', skills: '', status: 'Online', telegram: '',
 };
 
 const EMPTY_EVENT_FORM = {
-  title: '', description: '', type: 'workshop', points: 0, slots: 50,
-  registrationDeadline: '', eventDate: '', location: '', status: 'upcoming',
+  title: '', description: '', type: '', points: 0, slots: 50,
+  registrationDeadline: '', eventDate: '', venue: '', status: 'upcoming',
 };
 
 const EMPTY_NOTICE_FORM = { title: '', message: '', priority: 'low' };
@@ -89,6 +89,8 @@ const AdminDashboard = () => {
   const [projectForm, setProjectForm] = useState(EMPTY_PROJECT_FORM);
   const [projectEditing, setProjectEditing] = useState(null);
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [projectImage, setProjectImage] = useState(null);
+  const [projectImagePreview, setProjectImagePreview] = useState(null);
   const [projectSaving, setProjectSaving] = useState(false);
   const [projectDeleteConfirm, setProjectDeleteConfirm] = useState(null);
 
@@ -101,6 +103,42 @@ const AdminDashboard = () => {
   const fetchEvents = async () => { try { setEvents(await eventService.getAll()); } catch { setError('Failed to load events'); } };
   const fetchNotices = async () => { try { setNotices(await noticeService.getAll()); } catch { setError('Failed to load notices'); } };
   const fetchProjects = async () => { try { setProjects(await projectService.getAll()); } catch { setError('Failed to load projects'); } };
+
+  // ── Fix mobile scroll: stop Lenis and unlock html/body/root ─
+  // Lenis in root mode adds overflow:hidden to html+body and intercepts
+  // all touch events. We must undo this while the admin page is mounted.
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById('root');
+
+    // Save original styles so we can restore them on unmount
+    const savedHtmlOverflow  = html.style.overflow;
+    const savedBodyOverflow  = body.style.overflow;
+    const savedBodyHeight    = body.style.height;
+    const savedHtmlHeight    = html.style.height;
+    const savedRootHeight    = root ? root.style.height : '';
+
+    // Stop Lenis so it no longer intercepts touchmove / wheel
+    window.__lenis?.stop();
+
+    // Force the full scroll chain to be scrollable
+    html.style.overflow  = 'visible';
+    html.style.height    = 'auto';
+    body.style.overflow  = 'visible';
+    body.style.height    = 'auto';
+    if (root) root.style.height = 'auto';
+
+    return () => {
+      // Restore everything for the rest of the site
+      html.style.overflow  = savedHtmlOverflow;
+      html.style.height    = savedHtmlHeight;
+      body.style.overflow  = savedBodyOverflow;
+      body.style.height    = savedBodyHeight;
+      if (root) root.style.height = savedRootHeight;
+      window.__lenis?.start();
+    };
+  }, []);
 
   useEffect(() => {
     authService.checkAuth().then(async (ok) => {
@@ -185,7 +223,7 @@ const AdminDashboard = () => {
   };
   const openEditEvent = (ev) => {
     setEventEditing(ev.id);
-    setEventForm({ title: ev.title, description: ev.description, type: ev.type, points: ev.points, slots: ev.slots, registrationDeadline: toInputDate(ev.registrationDeadline), eventDate: toInputDate(ev.eventDate), location: ev.location, status: ev.status });
+    setEventForm({ title: ev.title, description: ev.description, type: ev.type, points: ev.points, slots: ev.slots, registrationDeadline: toInputDate(ev.registrationDeadline), eventDate: toInputDate(ev.eventDate), venue: ev.venue || ev.location || '', status: ev.status });
     setEventPoster(null); setEventPosterPreview(ev.posterUrl || null); setShowEventForm(true); setError('');
   };
   const closeEventForm = () => { setShowEventForm(false); setEventEditing(null); setEventForm(EMPTY_EVENT_FORM); setEventPoster(null); setEventPosterPreview(null); setError(''); };
@@ -233,14 +271,29 @@ const AdminDashboard = () => {
 
   // ── Projects ─────────────────────────────────────────────
 
-  const openAddProject = () => { setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setShowProjectForm(true); setError(''); };
-  const openEditProject = (p) => { setProjectEditing(p.id); setProjectForm({ name: p.name, description: p.description, github: p.github, demo: p.demo, technologies: p.technologies.join(', ') }); setShowProjectForm(true); setError(''); };
-  const closeProjectForm = () => { setShowProjectForm(false); setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setError(''); };
+  const openAddProject = () => { setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setProjectImage(null); setProjectImagePreview(null); setShowProjectForm(true); setError(''); };
+  const openEditProject = (p) => { setProjectEditing(p.id); setProjectForm({ name: p.name, description: p.description, github: p.github, demo: p.demo, technologies: p.technologies.join(', ') }); setProjectImage(null); setProjectImagePreview(p.imageUrl || null); setShowProjectForm(true); setError(''); };
+  const closeProjectForm = () => { setShowProjectForm(false); setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setProjectImage(null); setProjectImagePreview(null); setError(''); };
+  
+  const handleProjectImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { setError('Image must be under 5MB'); return; }
+    setProjectImage(file); setProjectImagePreview(URL.createObjectURL(file));
+  };
+
   const handleProjectSubmit = async (e) => {
     e.preventDefault(); setProjectSaving(true); setError('');
     try {
-      const payload = { ...projectForm, technologies: JSON.stringify(projectForm.technologies.split(',').map(t => t.trim()).filter(Boolean)) };
-      if (projectEditing) { await projectService.update(projectEditing, payload); } else { await projectService.create(payload); }
+      const fd = new FormData();
+      fd.append('name', projectForm.name.trim());
+      if (projectForm.description) fd.append('description', projectForm.description.trim());
+      if (projectForm.github) fd.append('github', projectForm.github.trim());
+      if (projectForm.demo) fd.append('demo', projectForm.demo.trim());
+      fd.append('technologies', JSON.stringify(projectForm.technologies.split(',').map(t => t.trim()).filter(Boolean)));
+      if (projectImage) fd.append('image', projectImage);
+
+      if (projectEditing) { await projectService.update(projectEditing, fd); } else { await projectService.create(fd); }
       closeProjectForm(); await fetchProjects();
     } catch (err) { setError(err.message); } finally { setProjectSaving(false); }
   };
@@ -274,6 +327,8 @@ const AdminDashboard = () => {
         <button className="admin-dash__add-btn" onClick={openAddMember}><Plus size={18} /> Add Member</button>
       </div>
       {error && !showMemberForm && <div className="admin-dash__error">{error}</div>}
+
+      {/* Desktop table */}
       <div className="admin-dash__table-wrap" data-lenis-prevent="true">
         <table className="admin-dash__table">
           <thead><tr><th></th><th>Photo</th><th>Name</th><th>Role</th><th>Roll Number</th><th>Status</th><th>Actions</th></tr></thead>
@@ -311,7 +366,61 @@ const AdminDashboard = () => {
             ))}
           </tbody>
         </table>
-        {members.length === 0 && <div className="admin-dash__empty">No members yet. Click "Add Member" to get started.</div>}
+        {members.length === 0 && <div className="admin-dash__empty">No members yet. Click &ldquo;Add Member&rdquo; to get started.</div>}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="admin-mob-cards">
+        {members.length === 0 && <div className="admin-dash__empty">No members yet. Tap &ldquo;Add Member&rdquo; to get started.</div>}
+        {members.map((m, idx) => (
+          <div key={m.id} className="admin-mob-card">
+            <div className="admin-mob-card__top">
+              <img className="admin-mob-card__avatar" src={getAvatarUrl(m)} alt={m.name} />
+              <div className="admin-mob-card__info">
+                <div className="admin-mob-card__name">{m.name}</div>
+                <div className="admin-mob-card__sub">{m.role} &bull; {m.rollNumber}</div>
+              </div>
+              <span className={`admin-dash__status admin-dash__status--${m.status.toLowerCase()}`}>{m.status}</span>
+            </div>
+            {m.description && <div className="admin-mob-card__desc">{m.description}</div>}
+            {memberDeleteConfirm === m.id ? (
+              <div className="admin-mob-card__confirm">
+                <span className="admin-mob-card__confirm-label">Delete this member?</span>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => handleMemberDelete(m.id)}>Yes, Delete</button>
+                <button className="admin-mob-btn" onClick={() => setMemberDeleteConfirm(null)}>Cancel</button>
+              </div>
+            ) : (
+              <div className="admin-mob-card__actions">
+                <button
+                  className="admin-mob-btn admin-mob-btn--reorder"
+                  disabled={idx === 0}
+                  onClick={async () => {
+                    if (idx === 0) return;
+                    const list = [...members];
+                    [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+                    setMembers(list);
+                    try { await memberService.reorder(list.map(x => x.id)); } catch { await fetchMembers(); }
+                  }}
+                  title="Move up"
+                ><ArrowUp size={15} /></button>
+                <button
+                  className="admin-mob-btn admin-mob-btn--reorder"
+                  disabled={idx === members.length - 1}
+                  onClick={async () => {
+                    if (idx === members.length - 1) return;
+                    const list = [...members];
+                    [list[idx], list[idx + 1]] = [list[idx + 1], list[idx]];
+                    setMembers(list);
+                    try { await memberService.reorder(list.map(x => x.id)); } catch { await fetchMembers(); }
+                  }}
+                  title="Move down"
+                ><ArrowDown size={15} /></button>
+                <button className="admin-mob-btn admin-mob-btn--edit" onClick={() => openEditMember(m)}><Edit3 size={15} /> Edit</button>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => setMemberDeleteConfirm(m.id)}><Trash2 size={15} /></button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </>
   );
@@ -329,6 +438,8 @@ const AdminDashboard = () => {
         <button className="admin-dash__add-btn" onClick={openAddEvent}><Plus size={18} /> Add Event</button>
       </div>
       {error && !showEventForm && <div className="admin-dash__error">{error}</div>}
+
+      {/* Desktop table */}
       <div className="admin-dash__table-wrap" data-lenis-prevent="true">
         <table className="admin-dash__table">
           <thead><tr><th>Poster</th><th>Title</th><th>Type</th><th>Event Date</th><th>Slots</th><th>Status</th><th>Actions</th></tr></thead>
@@ -361,7 +472,43 @@ const AdminDashboard = () => {
             ))}
           </tbody>
         </table>
-        {events.length === 0 && <div className="admin-dash__empty">No events yet. Click "Add Event" to create one.</div>}
+        {events.length === 0 && <div className="admin-dash__empty">No events yet. Click &ldquo;Add Event&rdquo; to create one.</div>}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="admin-mob-cards">
+        {events.length === 0 && <div className="admin-dash__empty">No events yet. Tap &ldquo;Add Event&rdquo; to create one.</div>}
+        {events.map((ev) => (
+          <div key={ev.id} className="admin-mob-card">
+            <div className="admin-mob-card__top">
+              {ev.posterUrl
+                ? <img className="admin-mob-card__avatar admin-mob-card__avatar--event" src={ev.posterUrl} alt={ev.title} />
+                : <div className="admin-mob-card__avatar" style={{ display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(125,190,255,0.08)', color:'rgba(125,190,255,0.4)', fontSize:'1.2rem' }}><Calendar size={20} /></div>}
+              <div className="admin-mob-card__info">
+                <div className="admin-mob-card__name">{ev.title}</div>
+                <div className="admin-mob-card__sub">{fmtDate(ev.eventDate)} &bull; {ev.registeredCount}/{ev.slots} slots</div>
+              </div>
+            </div>
+            <div className="admin-mob-card__chips">
+              <span className="admin-dash__type-badge" style={{ background: TYPE_BADGE_COLORS[ev.type] || '#555' }}>{ev.type}</span>
+              <span className={`admin-dash__status admin-dash__status--${ev.status}`}>{ev.status}</span>
+            </div>
+            {ev.description && <div className="admin-mob-card__desc">{ev.description}</div>}
+            {eventDeleteConfirm === ev.id ? (
+              <div className="admin-mob-card__confirm">
+                <span className="admin-mob-card__confirm-label">Delete this event?</span>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => handleEventDelete(ev.id)}>Yes, Delete</button>
+                <button className="admin-mob-btn" onClick={() => setEventDeleteConfirm(null)}>Cancel</button>
+              </div>
+            ) : (
+              <div className="admin-mob-card__actions">
+                <button className="admin-mob-btn" onClick={() => viewRegistrations(ev)}><Eye size={15} /> Regs</button>
+                <button className="admin-mob-btn admin-mob-btn--edit" onClick={() => openEditEvent(ev)}><Edit3 size={15} /> Edit</button>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => setEventDeleteConfirm(ev.id)}><Trash2 size={15} /></button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </>
   );
@@ -376,6 +523,8 @@ const AdminDashboard = () => {
         <button className="admin-dash__add-btn" onClick={openAddNotice}><Plus size={18} /> Add Notice</button>
       </div>
       {error && !showNoticeForm && <div className="admin-dash__error">{error}</div>}
+
+      {/* Desktop table */}
       <div className="admin-dash__table-wrap" data-lenis-prevent="true">
         <table className="admin-dash__table">
           <thead><tr><th>Title</th><th>Message</th><th>Priority</th><th>Date</th><th>Actions</th></tr></thead>
@@ -401,7 +550,37 @@ const AdminDashboard = () => {
             ))}
           </tbody>
         </table>
-        {notices.length === 0 && <div className="admin-dash__empty">No notices yet. Click "Add Notice" to post one.</div>}
+        {notices.length === 0 && <div className="admin-dash__empty">No notices yet. Click &ldquo;Add Notice&rdquo; to post one.</div>}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="admin-mob-cards">
+        {notices.length === 0 && <div className="admin-dash__empty">No notices yet. Tap &ldquo;Add Notice&rdquo; to post one.</div>}
+        {notices.map((n) => (
+          <div key={n.id} className="admin-mob-card">
+            <div className="admin-mob-card__top">
+              <div className="admin-mob-card__avatar" style={{ display:'flex', alignItems:'center', justifyContent:'center', background: `${PRIORITY_COLORS[n.priority]}22`, color: PRIORITY_COLORS[n.priority] }}><Bell size={20} /></div>
+              <div className="admin-mob-card__info">
+                <div className="admin-mob-card__name">{n.title}</div>
+                <div className="admin-mob-card__sub">{fmtDate(n.createdAt)}</div>
+              </div>
+              <span className="admin-dash__priority-badge" style={{ background: PRIORITY_COLORS[n.priority] || '#555', flexShrink:0 }}>{n.priority}</span>
+            </div>
+            <div className="admin-mob-card__desc">{n.message}</div>
+            {noticeDeleteConfirm === n.id ? (
+              <div className="admin-mob-card__confirm">
+                <span className="admin-mob-card__confirm-label">Delete this notice?</span>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => handleNoticeDelete(n.id)}>Yes, Delete</button>
+                <button className="admin-mob-btn" onClick={() => setNoticeDeleteConfirm(null)}>Cancel</button>
+              </div>
+            ) : (
+              <div className="admin-mob-card__actions">
+                <button className="admin-mob-btn admin-mob-btn--edit" onClick={() => openEditNotice(n)}><Edit3 size={15} /> Edit</button>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => setNoticeDeleteConfirm(n.id)}><Trash2 size={15} /> Delete</button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </>
   );
@@ -416,6 +595,8 @@ const AdminDashboard = () => {
         <button className="admin-dash__add-btn" onClick={openAddProject}><Plus size={18} /> Add Project</button>
       </div>
       {error && !showProjectForm && <div className="admin-dash__error">{error}</div>}
+
+      {/* Desktop table */}
       <div className="admin-dash__table-wrap" data-lenis-prevent="true">
         <table className="admin-dash__table">
           <thead><tr><th>Name</th><th>Technologies</th><th>GitHub</th><th>Actions</th></tr></thead>
@@ -449,7 +630,44 @@ const AdminDashboard = () => {
             ))}
           </tbody>
         </table>
-        {projects.length === 0 && <div className="admin-dash__empty">No projects yet. Click "Add Project" to showcase one.</div>}
+        {projects.length === 0 && <div className="admin-dash__empty">No projects yet. Click &ldquo;Add Project&rdquo; to showcase one.</div>}
+      </div>
+
+      {/* Mobile cards */}
+      <div className="admin-mob-cards">
+        {projects.length === 0 && <div className="admin-dash__empty">No projects yet. Tap &ldquo;Add Project&rdquo; to showcase one.</div>}
+        {projects.map((p) => (
+          <div key={p.id} className="admin-mob-card">
+            <div className="admin-mob-card__top">
+              <div className="admin-mob-card__avatar" style={{ display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(125,190,255,0.08)', color:'rgba(125,190,255,0.5)' }}>
+                {p.imageUrl ? <img src={p.imageUrl} alt={p.name} style={{ width:'100%', height:'100%', objectFit:'cover', borderRadius:'10px' }} /> : <FolderKanban size={20} />}
+              </div>
+              <div className="admin-mob-card__info">
+                <div className="admin-mob-card__name">{p.name}</div>
+                {p.github && <div className="admin-mob-card__sub"><a href={p.github} target="_blank" rel="noopener noreferrer" className="admin-dash__link">GitHub ↗</a></div>}
+              </div>
+            </div>
+            {p.technologies.length > 0 && (
+              <div className="admin-mob-card__chips">
+                {p.technologies.slice(0, 5).map((t) => <span key={t} className="admin-dash__tech-tag">{t}</span>)}
+                {p.technologies.length > 5 && <span className="admin-dash__tech-tag">+{p.technologies.length - 5}</span>}
+              </div>
+            )}
+            {p.description && <div className="admin-mob-card__desc">{p.description}</div>}
+            {projectDeleteConfirm === p.id ? (
+              <div className="admin-mob-card__confirm">
+                <span className="admin-mob-card__confirm-label">Delete this project?</span>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => handleProjectDelete(p.id)}>Yes, Delete</button>
+                <button className="admin-mob-btn" onClick={() => setProjectDeleteConfirm(null)}>Cancel</button>
+              </div>
+            ) : (
+              <div className="admin-mob-card__actions">
+                <button className="admin-mob-btn admin-mob-btn--edit" onClick={() => openEditProject(p)}><Edit3 size={15} /> Edit</button>
+                <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => setProjectDeleteConfirm(p.id)}><Trash2 size={15} /> Delete</button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
     </>
   );
@@ -477,7 +695,18 @@ const AdminDashboard = () => {
   // ── Render ────────────────────────────────────────────────
   return (
     <div className="admin-dash">
-      {/* Sidebar */}
+      {/* ── Mobile sticky header (hidden on desktop via CSS) ── */}
+      <header className="admin-mob-header">
+        <div className="admin-mob-header__brand">
+          <div className="admin-mob-header__logo">KF</div>
+          <h1 className="admin-mob-header__title">{NAV_ITEMS.find(n => n.id === activeSection)?.label || 'Dashboard'}</h1>
+        </div>
+        <button className="admin-mob-header__logout" onClick={handleLogout}>
+          <LogOut size={15} /> Logout
+        </button>
+      </header>
+
+      {/* ── Desktop Sidebar (hidden on mobile via CSS) ── */}
       <aside className="admin-sidebar">
         <div className="admin-sidebar__brand">
           <div className="admin-sidebar__logo">KF</div>
@@ -497,7 +726,7 @@ const AdminDashboard = () => {
         </div>
       </aside>
 
-      {/* Main */}
+      {/* ── Main content ── */}
       <main className="admin-main">
         <header className="admin-main__topbar">
           <h1 className="admin-main__title">{NAV_ITEMS.find(n => n.id === activeSection)?.label || 'Dashboard'}</h1>
@@ -508,6 +737,20 @@ const AdminDashboard = () => {
         </header>
         <div className="admin-main__content" data-lenis-prevent="true">{renderActiveSection()}</div>
       </main>
+
+      {/* ── Mobile floating dock (hidden on desktop via CSS) ── */}
+      <nav className="admin-mob-tabs">
+        {NAV_ITEMS.map(item => (
+          <button
+            key={item.id}
+            className={`admin-mob-tab ${activeSection === item.id ? 'admin-mob-tab--active' : ''}`}
+            onClick={() => { setActiveSection(item.id); setError(''); }}
+          >
+            <span className="admin-mob-tab__icon">{item.icon}</span>
+            {item.label}
+          </button>
+        ))}
+      </nav>
 
       {/* ── Member Modal ─────────────────────────────────── */}
       {showMemberForm && (
@@ -520,7 +763,16 @@ const AdminDashboard = () => {
             {error && <div className="admin-dash__error">{error}</div>}
             <div className="admin-dash__form-grid">
               <div className="admin-dash__field"><label>Name *</label><input required value={memberForm.name} onChange={e => setMemberForm({ ...memberForm, name: e.target.value })} placeholder="Full Name" /></div>
-              <div className="admin-dash__field"><label>Role *</label><input required value={memberForm.role} onChange={e => setMemberForm({ ...memberForm, role: e.target.value })} placeholder="e.g. Frontend Developer" /></div>
+              <div className="admin-dash__field">
+                <label>Domain / Role *</label>
+                <select value={memberForm.role} onChange={e => setMemberForm({ ...memberForm, role: e.target.value })}>
+                  <option value="Tech and Innovation">Tech and Innovation</option>
+                  <option value="Creative and Content">Creative and Content</option>
+                  <option value="Media and Broadcasting">Media and Broadcasting</option>
+                  <option value="Operations">Operations</option>
+                  <option value="Speakers">Speakers</option>
+                </select>
+              </div>
               <div className="admin-dash__field"><label>Roll Number *</label><input required value={memberForm.rollNumber} onChange={e => setMemberForm({ ...memberForm, rollNumber: e.target.value })} placeholder="e.g. 2400000001" /></div>
               <div className="admin-dash__field"><label>Status</label><select value={memberForm.status} onChange={e => setMemberForm({ ...memberForm, status: e.target.value })}><option>Online</option><option>Away</option><option>Busy</option></select></div>
               <div className="admin-dash__field admin-dash__field--full"><label>Short Description</label><input value={memberForm.description} onChange={e => setMemberForm({ ...memberForm, description: e.target.value })} placeholder="One-liner for team cards" /></div>
@@ -561,13 +813,13 @@ const AdminDashboard = () => {
             <div className="admin-dash__form-grid">
               <div className="admin-dash__field admin-dash__field--full"><label>Title *</label><input required value={eventForm.title} onChange={e => setEventForm({ ...eventForm, title: e.target.value })} placeholder="Event title" /></div>
               <div className="admin-dash__field admin-dash__field--full"><label>Description</label><textarea rows="3" value={eventForm.description} onChange={e => setEventForm({ ...eventForm, description: e.target.value })} placeholder="What's this event about?" /></div>
-              <div className="admin-dash__field"><label>Type</label><select value={eventForm.type} onChange={e => setEventForm({ ...eventForm, type: e.target.value })}><option value="workshop">Workshop</option><option value="hackathon">Hackathon</option><option value="competition">Competition</option><option value="talk">Talk</option><option value="seminar">Seminar</option></select></div>
-              <div className="admin-dash__field"><label>Status</label><select value={eventForm.status} onChange={e => setEventForm({ ...eventForm, status: e.target.value })}><option value="upcoming">Upcoming</option><option value="ongoing">Ongoing</option><option value="completed">Completed</option></select></div>
+              <div className="admin-dash__field"><label>Event Type</label><input value={eventForm.type} onChange={e => setEventForm({ ...eventForm, type: e.target.value })} placeholder="e.g. Workshop, Seminar" /></div>
+              <div className="admin-dash__field"><label>Status</label><select value={eventForm.status} onChange={e => setEventForm({ ...eventForm, status: e.target.value })}><option value="upcoming">Upcoming</option><option value="ongoing">Ongoing</option><option value="ended">Ended</option></select></div>
               <div className="admin-dash__field"><label>Points Awarded</label><input type="number" min="0" value={eventForm.points} onChange={e => setEventForm({ ...eventForm, points: e.target.value })} /></div>
               <div className="admin-dash__field"><label>Total Slots</label><input type="number" min="1" value={eventForm.slots} onChange={e => setEventForm({ ...eventForm, slots: e.target.value })} /></div>
               <div className="admin-dash__field"><label>Event Date *</label><input required type="date" value={eventForm.eventDate} onChange={e => setEventForm({ ...eventForm, eventDate: e.target.value })} /></div>
               <div className="admin-dash__field"><label>Registration Deadline</label><input type="date" value={eventForm.registrationDeadline} onChange={e => setEventForm({ ...eventForm, registrationDeadline: e.target.value })} /></div>
-              <div className="admin-dash__field admin-dash__field--full"><label>Location</label><input value={eventForm.location} onChange={e => setEventForm({ ...eventForm, location: e.target.value })} placeholder="e.g. A Block Seminar Hall" /></div>
+              <div className="admin-dash__field admin-dash__field--full"><label>Venue</label><input value={eventForm.venue} onChange={e => setEventForm({ ...eventForm, venue: e.target.value })} placeholder="e.g. A Block Seminar Hall" /></div>
               <div className="admin-dash__field admin-dash__field--full admin-dash__field--divider"><label className="admin-dash__field-section-label">Poster Image</label></div>
               <div className="admin-dash__field admin-dash__field--full"><label>Upload Poster (JPEG/PNG/WebP, max 5MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleEventPosterChange} /></div>
               {eventPosterPreview && (
@@ -651,6 +903,14 @@ const AdminDashboard = () => {
               <div className="admin-dash__field"><label>GitHub URL</label><input type="url" value={projectForm.github} onChange={e => setProjectForm({ ...projectForm, github: e.target.value })} placeholder="https://github.com/..." /></div>
               <div className="admin-dash__field"><label>Demo URL</label><input type="url" value={projectForm.demo} onChange={e => setProjectForm({ ...projectForm, demo: e.target.value })} placeholder="https://..." /></div>
               <div className="admin-dash__field admin-dash__field--full"><label>Technologies (comma-separated)</label><input value={projectForm.technologies} onChange={e => setProjectForm({ ...projectForm, technologies: e.target.value })} placeholder="React, Node.js, MongoDB" /></div>
+              <div className="admin-dash__field admin-dash__field--full admin-dash__field--divider"><label className="admin-dash__field-section-label">Project Image</label></div>
+              <div className="admin-dash__field admin-dash__field--full"><label>Upload Image (JPEG/PNG/WebP, max 5MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProjectImageChange} /></div>
+              {projectImagePreview && (
+                <div className="admin-dash__field admin-dash__field--full">
+                  <label>Image Preview</label>
+                  <img src={projectImagePreview} alt="Project preview" className="admin-dash__poster-preview" />
+                </div>
+              )}
             </div>
             <div className="admin-dash__modal-actions">
               <button type="button" className="admin-dash__cancel-btn" onClick={closeProjectForm}>Cancel</button>

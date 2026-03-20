@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ProfileCard from '../components/ProfileCard';
 import memberService, { findBySlug, nameToSlug } from '../services/memberService';
+import BackButton from '../components/BackButton';
 import './ProfilePage.css';
 
 const ProfilePage = () => {
@@ -28,9 +29,7 @@ const ProfilePage = () => {
       <div className="profile-page">
         <div className="profile-page__not-found">
           <h2>Profile not found</h2>
-          <button className="profile-page__back" onClick={() => navigate('/team')}>
-            <span className="profile-page__back-arrow">&#8592;</span> Back to Team
-          </button>
+          <BackButton to="/team" fullWidthMobile={true} />
         </div>
       </div>
     );
@@ -46,9 +45,7 @@ const ProfilePage = () => {
 
   return (
     <div className="profile-page">
-      <button className="profile-page__back" onClick={() => navigate('/team')}>
-        <span className="profile-page__back-arrow">&#8592;</span> Back to Team
-      </button>
+      <BackButton to="/team" fullWidthMobile={true} />
 
       <div className="profile-page__layout">
         {/* Left: ProfileCard with tilt */}

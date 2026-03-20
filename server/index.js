@@ -37,6 +37,15 @@ app.use('/api/events', eventRoutes);
 app.use('/api/notices', noticeRoutes);
 app.use('/api/projects', projectRoutes);
 
+// Global Error Handler for clean JSON responses (e.g. Multer file size / type errors)
+app.use((err, req, res, next) => {
+  console.error('Unhandled Server Error:', err.message);
+  if (err.message === 'File too large') {
+    return res.status(400).json({ error: 'Image exceeds the 5MB size limit' });
+  }
+  return res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+});
+
 app.listen(PORT, () => {
   console.log(`✓ KLFORGE API running on http://localhost:${PORT}`);
 });

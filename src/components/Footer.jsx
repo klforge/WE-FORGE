@@ -1,7 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Footer.css';
-import footerLogo from '../assets/KLFORGE logo.png';
 
 const Footer = () => {
   const navigate = useNavigate();
@@ -12,7 +11,7 @@ const Footer = () => {
         {/* Left — logo + CTA */}
         <div className="site-footer__left">
           <img
-            src={footerLogo}
+            src="/images/KLFORGE logo.png"
             alt="KLFORGE"
             className="site-footer__logo"
           />
@@ -28,7 +27,7 @@ const Footer = () => {
         <div className="site-footer__links-card">
           <div className="site-footer__col">
             <h4>Club</h4>
-            <a href="/#">About</a>
+            <a href="/#what-is-forge">About</a>
             <a href="/team" onClick={(e) => { e.preventDefault(); navigate('/team'); }}>Team</a>
             <a href="/#">Events</a>
             <a href="/#">Projects</a>
@@ -36,7 +35,7 @@ const Footer = () => {
           <div className="site-footer__col">
             <h4>Resources</h4>
             <a href="/#">Newsletter</a>
-            <a href="/#">FAQ</a>
+            <a href="/faq" onClick={(e) => { e.preventDefault(); navigate('/faq'); }}>FAQ</a>
           </div>
           <div className="site-footer__col">
             <h4>Contact Us</h4>

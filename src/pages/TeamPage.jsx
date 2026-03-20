@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ExpandableCard from "../components/ExpandableCard";
 import memberService, { toTeamCards } from "../services/memberService";
+import BackButton from "../components/BackButton";
 import "./TeamPage.css";
 
 const TeamPage = () => {
@@ -17,9 +18,9 @@ const TeamPage = () => {
 
   return (
     <div className="team-page">
-      <button className="team-page__back" onClick={() => navigate("/")}>
-        <span className="team-page__back-arrow">&#8592;</span> Back
-      </button>
+      <div className="team-page__topbar" style={{ padding: '24px 48px 0' }}>
+        <BackButton />
+      </div>
 
       <div className="team-page__header">
         <h1 className="team-page__title">Our Team</h1>

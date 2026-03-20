@@ -721,8 +721,9 @@ tr[draggable]:active {
     font-size: 0.8rem;
   }
 
+  /* Make the label visible on mobile to improve accessibility */
   .admin-sidebar__item span:first-of-type:not(.admin-sidebar__badge) {
-    display: none;
+    display: inline;
   }
 
   .admin-sidebar__bottom {
@@ -736,15 +737,23 @@ tr[draggable]:active {
   }
 
   .admin-main__content {
-    padding: 20px 16px;
+    padding: 16px 12px;
   }
 
   .admin-main__topbar {
-    padding: 16px 20px;
+    padding: 16px 16px;
   }
 
+  /* Add better scroll padding for mobile tables */
   .admin-dash__table-wrap {
     overflow-x: auto;
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
+
+  .admin-dash__table th, .admin-dash__table td {
+    padding: 10px 12px;
+    font-size: 0.85rem;
   }
 
   .admin-dash__form-grid {
@@ -752,7 +761,12 @@ tr[draggable]:active {
   }
 
   .admin-dash__modal {
-    padding: 24px;
+    padding: 20px 16px;
+    margin: 16px auto;
+  }
+
+  .admin-dash__overlay {
+    padding: 16px 12px;
   }
 }
 
@@ -835,4 +849,447 @@ tr[draggable]:active {
 .admin-dash__status--completed {
   background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.35);
+}
+/* ═══════════════════════════════════════════════════════════
+   MOBILE OVERHAUL — max-width: 768px
+   Desktop layout untouched above this block.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Mobile top header (hidden on desktop) ─────────────── */
+.admin-mob-header {
+  display: none;
+}
+
+/* ── Mobile bottom tab bar (hidden on desktop) ─────────── */
+.admin-mob-tabs {
+  display: none;
+}
+
+/* ── Mobile card list (hidden on desktop) ──────────────── */
+.admin-mob-cards {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Core layout: admin uses BODY-level natural scroll.
+     DO NOT set overflow-y here — let body scroll freely. */
+  .admin-dash {
+    flex-direction: column;
+    height: auto !important;
+    min-height: 100svh;
+    overflow: visible !important;
+    padding-bottom: 110px; /* ensure last card clears the floating dock */
+  }
+
+  .admin-sidebar { display: none; }
+  .admin-main__topbar { display: none; }
+
+  .admin-main {
+    height: auto !important;
+    min-height: 0;
+    flex: 1;
+    overflow: visible;
+  }
+
+  .admin-main__content {
+    padding: 16px 14px 24px;
+    overflow: visible;
+    height: auto;
+  }
+
+  /* ── Mobile sticky header ── */
+  .admin-mob-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgba(10, 10, 15, 0.94);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 14px 16px;
+  }
+
+  .admin-mob-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .admin-mob-header__logo {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(125, 190, 255, 0.25), rgba(125, 160, 255, 0.1));
+    border: 1px solid rgba(125, 190, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.68rem;
+    color: rgba(125, 190, 255, 0.9);
+    flex-shrink: 0;
+  }
+
+  .admin-mob-header__title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+  }
+
+  .admin-mob-header__logout {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .admin-mob-header__logout:hover,
+  .admin-mob-header__logout:active {
+    color: #ff6b6b;
+    border-color: rgba(255, 60, 60, 0.3);
+  }
+
+  /* ── Floating dock nav ── */
+  .admin-mob-tabs {
+    display: flex;
+    position: fixed;
+    bottom: 14px;
+    left: 16px;
+    right: 16px;
+    z-index: 100;
+    background: rgba(18, 18, 24, 0.92);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 22px;
+    padding: 6px 8px;
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.45),
+      0 2px 8px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    /* Dock pill itself should not eat touches on scroll — buttons handle their own events */
+    pointer-events: none;
+  }
+
+  /* Each tab button re-enables pointer events */
+  .admin-mob-tab {
+    pointer-events: all;
+  }
+
+  .admin-mob-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 16px;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.58rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s, background 0.2s;
+    min-height: 52px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (hover: hover) {
+    .admin-mob-tab:hover {
+      color: rgba(255, 255, 255, 0.7);
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .admin-mob-tab:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-mob-tab--active {
+    color: rgba(125, 190, 255, 1);
+    background: rgba(125, 190, 255, 0.1);
+  }
+
+  .admin-mob-tab__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+
+  /* ── Section header ── */
+  .admin-section__header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .admin-dash__add-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 13px 20px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+    min-height: 48px;
+  }
+
+  /* ── Hide desktop tables ── */
+  .admin-dash__table-wrap {
+    display: none;
+  }
+
+  /* ── Mobile card list ── */
+  .admin-mob-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .admin-mob-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    padding: 14px 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .admin-mob-card__top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .admin-mob-card__avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+  }
+
+  .admin-mob-card__info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .admin-mob-card__name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-mob-card__sub {
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .admin-mob-card__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .admin-mob-card__desc {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.4);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .admin-mob-card__actions {
+    display: flex;
+    gap: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 10px;
+  }
+
+  .admin-mob-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: transparent;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 44px;
+  }
+
+  .admin-mob-btn--edit {
+    color: rgba(125, 190, 255, 0.85);
+    border-color: rgba(125, 190, 255, 0.15);
+  }
+
+  .admin-mob-btn--edit:active {
+    background: rgba(125, 190, 255, 0.08);
+    color: rgba(125, 190, 255, 1);
+  }
+
+  .admin-mob-btn--delete {
+    color: rgba(255, 107, 107, 0.8);
+    border-color: rgba(255, 60, 60, 0.12);
+  }
+
+  .admin-mob-btn--delete:active {
+    background: rgba(255, 60, 60, 0.06);
+    color: #ff6b6b;
+  }
+
+  .admin-mob-btn--reorder {
+    flex: 0 0 auto;
+    min-width: 44px;
+    padding: 10px;
+    color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-mob-btn--reorder:active:not(:disabled) {
+    color: rgba(125, 190, 255, 0.9);
+    background: rgba(125, 190, 255, 0.08);
+    border-color: rgba(125, 190, 255, 0.2);
+  }
+
+  .admin-mob-btn--reorder:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
+  }
+
+  .admin-mob-card__confirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: #ff6b6b;
+    padding: 8px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+  }
+
+  .admin-mob-card__confirm-label {
+    flex: 1;
+    font-weight: 600;
+  }
+
+  /* Empty state */
+  .admin-dash__empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: rgba(255, 255, 255, 0.28);
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.07);
+    border-radius: 14px;
+    margin-top: 4px;
+  }
+
+  /* ── Bottom-sheet modal ── */
+  .admin-dash__overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .admin-dash__modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 92svh;
+    overflow-y: auto;
+    border-radius: 20px 20px 0 0;
+    padding: 8px 16px 32px;
+    margin: 0;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-dash__modal::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 4px auto 16px;
+  }
+
+  .admin-dash__modal-header {
+    margin-bottom: 14px;
+  }
+
+  .admin-dash__modal-header h2 {
+    font-size: 1.05rem;
+  }
+
+  /* ── Forms ── */
+  .admin-dash__form-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .admin-dash__field input,
+  .admin-dash__field textarea,
+  .admin-dash__field select {
+    font-size: 0.92rem;
+    padding: 12px 14px;
+    min-height: 48px;
+    border-radius: 10px;
+  }
+
+  .admin-dash__field textarea {
+    min-height: 80px;
+  }
+
+  .admin-dash__modal-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .admin-dash__save-btn,
+  .admin-dash__cancel-btn {
+    width: 100%;
+    min-height: 50px;
+    font-size: 0.95rem;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 380px) {
+  .admin-mob-tab { font-size: 0.52rem; padding: 6px 2px; }
+  .admin-mob-card__name { font-size: 0.88rem; }
 }
