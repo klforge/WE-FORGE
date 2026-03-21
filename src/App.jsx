@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import Lenis from 'lenis';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -24,6 +25,10 @@ gsap.registerPlugin(ScrollTrigger);
 function HomePage() {
   return (
     <div>
+      <Helmet>
+        <title>KLFORGE - Empowering Student Innovation</title>
+        <meta name="description" content="KLFORGE is an official technical club of KL University focused on open-source, web development, and AI." />
+      </Helmet>
       {/* Navbar can be added here later */}
       <HeroSection />
       <div className="hero-spacer" />

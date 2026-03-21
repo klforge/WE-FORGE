@@ -15,15 +15,35 @@ const memberRoutes = require('./routes/members');
 const eventRoutes = require('./routes/events');
 const noticeRoutes = require('./routes/notices');
 const projectRoutes = require('./routes/projects');
+const connectDB = require('./config/db');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+// Initialize database connection
+connectDB();
 
 const app = express();
 const PORT = process.env.API_PORT || 3001;
 
+app.use(helmet());
+app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" })); // Required to serve images
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, 
+});
+app.use(limiter);
+
+const allowedOrigins = [
+  'http://localhost:5173', 'http://127.0.0.1:5173',
+  'http://localhost:5174', 'http://127.0.0.1:5174',
+];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: [
-    'http://localhost:5173', 'http://127.0.0.1:5173',
-    'http://localhost:5174', 'http://127.0.0.1:5174',
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(express.json());

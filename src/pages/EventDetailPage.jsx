@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Search, Calendar, Clock, MapPin, Users, Star } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import eventService from '../services/eventService';
 import BackButton from '../components/BackButton';
 import './EventDetailPage.css';
@@ -122,6 +123,14 @@ const EventDetailPage = () => {
 
   return (
     <div className="event-detail">
+      <Helmet>
+        <title>{event.title} - KLFORGE Events</title>
+        <meta name="description" content={event.description || `Register for ${event.title} at KLFORGE.`} />
+        <meta property="og:title" content={event.title} />
+        <meta property="og:description" content={event.description || `Join us for ${event.title}`} />
+        {event.posterUrl && <meta property="og:image" content={event.posterUrl} />}
+      </Helmet>
+
       <div style={{ position: 'absolute', top: 30, left: '4%', zIndex: 10 }}>
         <BackButton to="/events" />
       </div>

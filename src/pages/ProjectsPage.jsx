@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { FolderKanban, Github, ExternalLink } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import BackButton from '../components/BackButton';
 import ComingSoon from '../components/ComingSoon';
 import projectService from '../services/projectService';
@@ -37,6 +38,10 @@ const ProjectsPage = () => {
 
     return (
         <div className="projects-page">
+            <Helmet>
+                <title>Projects - KLFORGE</title>
+                <meta name="description" content="Discover the latest projects and open-source contributions by KLFORGE members." />
+            </Helmet>
             <div className="projects-page__back">
                 <BackButton to="/" />
             </div>

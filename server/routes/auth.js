@@ -26,6 +26,7 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ role: 'admin' }, secret, { expiresIn: '8h' });
     res.cookie('admin_token', token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: 8 * 60 * 60 * 1000,
     });
