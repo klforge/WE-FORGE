@@ -1,7 +1,8 @@
+'use client';
 import React, { useEffect, useRef, useState, useId } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useOutsideClick } from "../hooks/useOutsideClick";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from "next/navigation";
 import "./ExpandableCard.css";
 
 const cardVariants = {
@@ -49,7 +50,7 @@ export function ExpandableCard({ cards }) {
   const [active, setActive] = useState(null);
   const ref = useRef(null);
   const id = useId();
-  const navigate = useNavigate();
+  const router = useRouter();
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -114,7 +115,7 @@ export function ExpandableCard({ cards }) {
                   onClick={(e) => {
                     if (active.profileLink) {
                       e.preventDefault();
-                      navigate(active.profileLink);
+                      router.push(active.profileLink);
                     } else {
                       e.preventDefault();
                     }

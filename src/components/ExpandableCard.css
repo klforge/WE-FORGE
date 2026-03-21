@@ -87,11 +87,10 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  max-width: 600px;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
 }
 
 /* Individual card item (collapsed) */
@@ -108,7 +107,9 @@
 }
 
 .expandable-card-item:hover {
-  background: #1a1a1a;
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .expandable-card-item__content {
@@ -134,15 +135,28 @@
   padding: 6px 16px;
   border-radius: 9999px;
   border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.expandable-card-item:hover .expandable-card-item__btn {
   background: #fff;
   color: #000;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s;
 }
 
 .expandable-card-item__btn:hover {
   background: #e5e5e5;
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Responsive Grid */
+@media (max-width: 768px) {
+  .expandable-card-list {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 }

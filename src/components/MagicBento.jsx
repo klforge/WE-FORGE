@@ -1,5 +1,6 @@
+'use client';
 import { useRef, useEffect, useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 import './MagicBento.css';
 
@@ -233,11 +234,11 @@ const MagicBento = ({
   const gridRef = useRef(null);
   const isMobile = useMobileDetection();
   const shouldDisableAnimations = disableAnimations || isMobile;
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleCardClick = (card) => {
     if (card.route) {
-      navigate(card.route);
+      router.push(card.route);
     }
   };
 

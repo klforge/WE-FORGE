@@ -1,16 +1,16 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+'use client';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import './BackButton.css';
 
 const BackButton = ({ onClick, to = '/', className = '', fullWidthMobile = false }) => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   const handleBack = () => {
     if (onClick) {
       onClick();
     } else {
-      navigate(to);
+      router.push(to);
     }
   };
 

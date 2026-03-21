@@ -144,30 +144,29 @@
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 8px 16px;
   border-radius: 999px;
   text-decoration: none;
   color: #fff;
   font-family: 'Inter', sans-serif;
   font-size: 0.9rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   transition: all 0.3s ease;
   max-width: 100%;
 }
 
 .hero__notice-toast:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .hero__notice-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fd0000;
+  color: #ffffff;
   background: rgba(255, 255, 255, 0.1);
   padding: 6px;
   border-radius: 50%;
@@ -229,12 +228,12 @@
 }
 
 .hero__heading {
-  font-size: clamp(1.6rem, 3vw, 2.8rem);
-  font-weight: 800;
-  line-height: 1.1;
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 900;
+  line-height: 1.05;
   color: #ffffff;
-  letter-spacing: -0.02em;
-  margin-bottom: 12px;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
 }
 
 .hero__description {
@@ -254,19 +253,26 @@
   align-items: center;
   gap: 10px;
   padding: 10px 14px 10px 10px;
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-  min-width: 220px;
-  max-width: 260px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.3);
+  min-width: 240px;
+  max-width: 280px;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   align-self: flex-end;
   opacity: 0;
   transform: translateY(80px);
+}
+
+.hero__card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
 }
 
 .hero__card:hover {

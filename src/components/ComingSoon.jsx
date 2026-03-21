@@ -1,11 +1,11 @@
+'use client';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+
 import { Clock } from 'lucide-react';
 import BackButton from './BackButton';
 import './ComingSoon.css';
 
 const ComingSoon = ({ title, message, theme = 'default' }) => {
-  const navigate = useNavigate();
 
   return (
     <div className={`coming-soon-page ${theme === 'cyan' ? 'coming-soon-page--cyan' : ''}`}>

@@ -1,3 +1,4 @@
+'use client';
 import { useMemo } from 'react';
 import './ReflectiveCard.css';
 import { Fingerprint, Activity } from 'lucide-react';

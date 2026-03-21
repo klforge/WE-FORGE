@@ -21,11 +21,11 @@ export const toTeamCards = (members) =>
     name: m.name,
     role: `${m.role}  •  ${m.rollNumber}`,
     description: m.description,
-    profileLink: `/${nameToSlug(m.name)}`,
+    profileLink: `/${m.id}`,
   }));
 
 export const findBySlug = (members, slug) =>
-  members.find((m) => nameToSlug(m.name) === slug) || null;
+  members.find((m) => m.id === slug || nameToSlug(m.name) === slug) || null;
 
 // ── API ──────────────────────────────────────────────────
 

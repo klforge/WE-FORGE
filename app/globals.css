@@ -1,0 +1,56 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --navbar-height: 80px;
+  --navbar-offset: 140px;
+  
+  /* Cyber-Forge Palette */
+  --primary: #00f2ff;
+  --secondary: #7d33ff;
+  --accent: #ff9d00;
+  --bg-deep: #050508;
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-border: rgba(255, 255, 255, 0.1);
+  --text-main: #ffffff;
+  --text-dim: rgba(255, 255, 255, 0.6);
+}
+
+
+body {
+  background-color: #000000;
+  color: var(--text-main);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Global Navbar Offset for non-home pages */
+.team-page, 
+.events-page, 
+.projects-page, 
+.faq-page, 
+.notices-page,
+.admin-page,
+.profile-page {
+  padding-top: var(--navbar-offset) !important;
+}
+
+.hero-spacer {
+  height: 100vh;
+  position: relative;
+}
+
+/* Separator between content and footer */
+.footer-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12) 20%, rgba(255, 255, 255, 0.12) 80%, transparent);
+  margin: 0;
+}

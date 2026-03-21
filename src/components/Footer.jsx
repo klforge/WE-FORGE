@@ -1,9 +1,10 @@
+'use client';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useRouter } from 'next/navigation';
 import './Footer.css';
 
 const Footer = () => {
-  const navigate = useNavigate();
+  const router = useRouter();
 
   return (
     <footer className="site-footer">
@@ -17,9 +18,9 @@ const Footer = () => {
           />
           <button
             className="site-footer__cta"
-            onClick={() => navigate('/team')}
+            onClick={() => router.push('/team')}
           >
-            Get Hired in Forge
+            Join Forge
           </button>
         </div>
 
@@ -28,14 +29,14 @@ const Footer = () => {
           <div className="site-footer__col">
             <h4>Club</h4>
             <a href="/#what-is-forge">About</a>
-            <a href="/team" onClick={(e) => { e.preventDefault(); navigate('/team'); }}>Team</a>
+            <a href="/team" onClick={(e) => { e.preventDefault(); router.push('/team'); }}>Team</a>
             <a href="/#">Events</a>
             <a href="/#">Projects</a>
           </div>
           <div className="site-footer__col">
             <h4>Resources</h4>
             <a href="/#">Newsletter</a>
-            <a href="/faq" onClick={(e) => { e.preventDefault(); navigate('/faq'); }}>FAQ</a>
+            <a href="/faq" onClick={(e) => { e.preventDefault(); router.push('/faq'); }}>FAQ</a>
           </div>
           <div className="site-footer__col">
             <h4>Contact Us</h4>

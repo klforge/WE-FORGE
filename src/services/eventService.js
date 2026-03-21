@@ -74,6 +74,20 @@ const eventService = {
         if (!res.ok) throw new Error('Failed to load registrations');
         return safeJson(res);
     },
+
+    async updateRegistrationRole(eventId, registrationId, role) {
+        const res = await fetch(`${API_BASE}/events/${encodeURIComponent(eventId)}/registrations`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ registrationId, role }),
+        });
+        if (!res.ok) {
+            const data = await safeJson(res);
+            throw new Error(data.error || 'Failed to update role');
+        }
+        return safeJson(res);
+    },
 };
 
 export default eventService;
