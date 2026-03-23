@@ -30,7 +30,9 @@ const ROLE_WEIGHTS = {
 };
 
 const EMPTY_MEMBER_FORM = {
-  name: '', role: 'Core Member', domain: 'General', rollNumber: '', email: '', description: '', bio: '', skills: '', status: 'Online', telegram: '',
+  name: '', role: 'Core Member', domain: 'General', rollNumber: '', email: '', 
+  description: '', bio: '', skills: '', status: 'Online', 
+  department: '', telegram: '', github: '', linkedin: '', isSuspended: false
 };
 
 const EMPTY_EVENT_FORM = {
@@ -58,10 +60,15 @@ const fmtRange = (s, e) => {
   if (!s || !e) return '—';
   const start = new Date(s);
   const end = new Date(e);
-  const dateStr = start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
   const startStr = start.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
   const endStr = end.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-  return `${dateStr}, ${startStr} - ${endStr}`;
+  const startDate = start.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const endDate = end.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+  if (startDate === endDate) {
+    return `${startDate}, ${startStr} - ${endStr}`;
+  }
+  return `${startDate}, ${startStr} - ${endDate}, ${endStr}`;
 };
 const toInputDate = (iso) => iso ? iso.slice(0, 10) : '';
 
@@ -73,6 +80,20 @@ const AdminDashboard = () => {
   // Auth + shared
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('members');
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      if (tab) setActiveSection(tab);
+    }
+  }, []);
+
+  const handleTabChange = (id) => {
+    setActiveSection(id);
+    setError('');
+    window.history.replaceState(null, '', `?tab=${id}`);
+  };
 
   // Members
   const [members, setMembers] = useState([]);
@@ -261,16 +282,19 @@ const AdminDashboard = () => {
     e.preventDefault(); setMemberSaving(true); setError('');
     try {
       const fd = new FormData();
-      fd.append('name', memberForm.name.trim()); fd.append('role', memberForm.role.trim());
-      fd.append('rollNumber', memberForm.rollNumber.trim()); fd.append('description', memberForm.description.trim());
-      fd.append('bio', memberForm.bio.trim()); fd.append('status', memberForm.status);
-      fd.append('domain', memberForm.domain);
-      fd.append('isSuspended', memberForm.isSuspended);
-      fd.append('skills', JSON.stringify(memberForm.skills.split(',').map(s => s.trim()).filter(Boolean)));
-      if (memberForm.telegram.trim()) fd.append('telegram', memberForm.telegram.trim());
-      if (memberForm.github?.trim()) fd.append('github', memberForm.github.trim());
-      if (memberForm.linkedin?.trim()) fd.append('linkedin', memberForm.linkedin.trim());
-      if (memberForm.department.trim()) fd.append('department', memberForm.department.trim());
+      fd.append('name', (memberForm.name || '').trim()); 
+      fd.append('role', (memberForm.role || '').trim());
+      fd.append('rollNumber', (memberForm.rollNumber || '').trim()); 
+      fd.append('description', (memberForm.description || '').trim());
+      fd.append('bio', (memberForm.bio || '').trim()); 
+      fd.append('status', memberForm.status || 'Online');
+      fd.append('domain', memberForm.domain || 'General');
+      fd.append('isSuspended', !!memberForm.isSuspended);
+      fd.append('skills', JSON.stringify((memberForm.skills || '').split(',').map(s => s.trim()).filter(Boolean)));
+      if (memberForm.telegram && memberForm.telegram.trim()) fd.append('telegram', memberForm.telegram.trim());
+      if (memberForm.github && memberForm.github.trim()) fd.append('github', memberForm.github.trim());
+      if (memberForm.linkedin && memberForm.linkedin.trim()) fd.append('linkedin', memberForm.linkedin.trim());
+      if (memberForm.department && memberForm.department.trim()) fd.append('department', memberForm.department.trim());
       if (photo && completedCrop && imgRef.current) { fd.append('photo', await getCroppedBlob(imgRef.current, completedCrop), 'cropped.png'); }
       else if (photo) { fd.append('photo', photo); }
       if (memberEditing) { await memberService.update(memberEditing, fd); } else { await memberService.add(fd); }
@@ -649,13 +673,13 @@ const AdminDashboard = () => {
                     : <span className="admin-dash__no-poster">—</span>}
                 </td>
                 <td className="admin-dash__name-cell">{ev.title}</td>
-                <td><span className="admin-dash__type-badge" style={{ background: TYPE_COLORS[ev.type] || '#555' }}>{ev.type}</span></td>
+                <td><span className="admin-dash__type-badge" style={{ background: TYPE_BADGE_COLORS[ev.type] || '#555' }}>{ev.type}</span></td>
                 <td><span className={`admin-dash__access-tag admin-dash__access-tag--${ev.accessType || 'public'}`}>{ev.accessType || 'public'}</span></td>
                 <td className="admin-dash__mono" style={{ fontSize: '0.75rem' }}>{fmtRange(ev.startTime, ev.endTime)}</td>
                 <td className="admin-dash__mono">{ev.registeredCount} / {ev.slots}</td>
                 <td><span className={`admin-dash__status admin-dash__status--${ev.status}`}>{ev.status}</span></td>
                 <td className="admin-dash__actions-cell">
-                  <button className="admin-dash__icon-btn" title="View Registrations" onClick={() => viewRegistrations(ev)}><Eye size={15} /></button>
+                  <button className="admin-dash__icon-btn" title="View Event Page" onClick={() => router.push(`/events/${ev.id}`)}><Eye size={15} /></button>
                   <button className="admin-dash__icon-btn admin-dash__icon-btn--edit" onClick={() => openEditEvent(ev)}><Edit3 size={15} /></button>
                   {eventDeleteConfirm === ev.id ? (
                     <span className="admin-dash__delete-confirm">Sure?
@@ -700,7 +724,7 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div className="admin-mob-card__actions">
-                <button className="admin-mob-btn" onClick={() => viewRegistrations(ev)}><Eye size={15} /> Regs</button>
+                <button className="admin-mob-btn" onClick={() => router.push(`/events/${ev.id}`)}><Eye size={15} /> View</button>
                 <button className="admin-mob-btn admin-mob-btn--edit" onClick={() => openEditEvent(ev)}><Edit3 size={15} /> Edit</button>
                 <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => setEventDeleteConfirm(ev.id)}><Trash2 size={15} /></button>
               </div>
@@ -1009,7 +1033,7 @@ const AdminDashboard = () => {
         </div>
         <nav className="admin-sidebar__nav">
           {NAV_ITEMS.map(item => (
-            <button key={item.id} className={`admin-sidebar__item ${activeSection === item.id ? 'admin-sidebar__item--active' : ''}`} onClick={() => { setActiveSection(item.id); setError(''); }}>
+            <button key={item.id} className={`admin-sidebar__item ${activeSection === item.id ? 'admin-sidebar__item--active' : ''}`} onClick={() => handleTabChange(item.id)}>
               {item.icon}
               <span>{item.label}</span>
               {item.count !== undefined && <span className="admin-sidebar__badge">{item.count}</span>}
@@ -1039,7 +1063,7 @@ const AdminDashboard = () => {
           <button
             key={item.id}
             className={`admin-mob-tab ${activeSection === item.id ? 'admin-mob-tab--active' : ''}`}
-            onClick={() => { setActiveSection(item.id); setError(''); }}
+            onClick={() => handleTabChange(item.id)}
           >
             <span className="admin-mob-tab__icon">{item.icon}</span>
             {item.label}
@@ -1067,13 +1091,9 @@ const AdminDashboard = () => {
               
               {adminInfo.isElite ? (
                 <>
-                  <div className="admin-dash__field">
-                  <label>Department</label>
-                  <input type="text" name="department" value={memberForm.department} onChange={e => setMemberForm({ ...memberForm, department: e.target.value })} placeholder="e.g. CSE" />
-                </div>
                 <div className="admin-dash__field">
                   <label>Department</label>
-                  <input type="text" name="department" value={memberForm.department} onChange={handleMemberFormChange} placeholder="e.g. CSE" />
+                  <input type="text" name="department" value={memberForm.department || ''} onChange={handleMemberFormChange} placeholder="e.g. CSE" />
                 </div>
                 <div className="admin-dash__field">
                   <label>Telegram Handle</label>
@@ -1092,8 +1112,8 @@ const AdminDashboard = () => {
                     type="checkbox" 
                     id="isSuspended" 
                     name="isSuspended" 
-                    checked={memberForm.isSuspended} 
-                    onChange={(e) => setMemberForm(prev => ({ ...prev, isSuspended: e.target.checked }))}
+                    checked={!!memberForm.isSuspended} 
+                    onChange={(e) => setMemberForm(prev => ({ ...prev, isSuspended: !!e.target.checked }))}
                     style={{ width: 20, height: 20, cursor: 'pointer' }}
                   />
                   <label htmlFor="isSuspended" style={{ margin: 0, cursor: 'pointer', color: '#ff4d4d', fontWeight: 700 }}>Suspend Account</label>
@@ -1205,6 +1225,10 @@ const AdminDashboard = () => {
               <div className="admin-dash__field">
                 <label>End Time *</label>
                 <input required type="datetime-local" value={eventForm.endTime ? new Date(new Date(eventForm.endTime).getTime() - new Date(eventForm.endTime).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={e => setEventForm({ ...eventForm, endTime: e.target.value })} />
+              </div>
+              <div className="admin-dash__field">
+                <label>Registration Deadline</label>
+                <input type="datetime-local" value={eventForm.registrationDeadline ? new Date(new Date(eventForm.registrationDeadline).getTime() - new Date(eventForm.registrationDeadline).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={e => setEventForm({ ...eventForm, registrationDeadline: e.target.value })} />
               </div>
 
               <div className="admin-dash__field admin-dash__field--full admin-dash__field--divider"><label className="admin-dash__field-section-label">Advanced Access Control</label></div>

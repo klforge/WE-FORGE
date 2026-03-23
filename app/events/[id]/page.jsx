@@ -4,20 +4,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Search, Calendar, Clock, MapPin, Users, Star, CheckCircle } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
-import { useSession } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import eventService from '../../../src/services/eventService';
 import BackButton from '../../../src/components/BackButton';
 import './page.css';
 
-const LS_KEY = 'klforge_registered_events';
-const getRegistered = () => {
-  try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
-};
-const markRegistered = (eventId, rollNumber) => {
-  const data = getRegistered();
-  data[eventId] = rollNumber;
-  localStorage.setItem(LS_KEY, JSON.stringify(data));
-};
 
 const TYPE_COLORS = {
   workshop: '#3b82f6',
@@ -30,7 +21,6 @@ const TYPE_COLORS = {
 const fmt = (iso) =>
   iso ? new Date(iso).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 
-const EMPTY_REG = { name: '', rollNumber: '', email: '' };
 
 const EventDetailPage = () => {
   const { id: eventId } = useParams();
@@ -39,31 +29,38 @@ const EventDetailPage = () => {
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [form, setForm] = useState(EMPTY_REG);
-  const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const { data: session } = useSession();
-  const [registered, setRegistered] = useState(() => getRegistered());
+  const [isRegistered, setIsRegistered] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     eventService.getAll()
       .then((events) => {
-        // Match by id or by slug derived from title
         const found = events.find(e =>
           e.id === eventId ||
           (e.title && e.title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') === eventId)
         );
         if (found) {
           setEvent(found);
+          // Check if user is registered for THIS event
+          if (session?.user?.email) {
+            eventService.getRegistrations(found.id)
+              .then(regs => {
+                const userRoll = session.user.email.split('@')[0];
+                const matched = regs.some(r => r.rollNumber === userRoll || r.email === session.user.email);
+                setIsRegistered(matched);
+              })
+              .catch(err => console.error("Error checking registration:", err));
+          }
         } else {
           setNotFound(true);
         }
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
-  }, [eventId]);
+  }, [eventId, session]);
 
   if (loading) {
     return (
@@ -86,7 +83,7 @@ const EventDetailPage = () => {
     );
   }
 
-  const alreadyRegistered = !!registered[event.id];
+  const alreadyRegistered = isRegistered;
   const slotsLeft = event.slots - event.registeredCount;
   const deadlinePast = new Date(event.registrationDeadline) < new Date();
     const now = new Date();
@@ -95,40 +92,47 @@ const EventDetailPage = () => {
     const currentStatus = now > end ? 'ended' : now >= start ? 'ongoing' : 'upcoming';
 
     const isEnded = currentStatus === 'ended';
-    const canRegister = !deadlinePast && slotsLeft > 0 && !isEnded && !alreadyRegistered;
+
+    // Access Control Logic
+    let isAuthorized = true;
+    let accessError = null;
+
+    if (event.accessType === 'domain') {
+      if (!session) {
+        isAuthorized = false;
+        accessError = 'Login to verify domain access';
+      } else {
+        const userDomain = session.user.email.split('@')[1]?.toLowerCase();
+        isAuthorized = event.allowedDomains.some(d => {
+          const domain = d.startsWith('@') ? d.slice(1).toLowerCase() : d.toLowerCase();
+          return userDomain === domain;
+        });
+        if (!isAuthorized) accessError = `Restricted to: ${event.allowedDomains.join(', ')}`;
+      }
+    } else if (event.accessType === 'private') {
+      if (!session) {
+        isAuthorized = false;
+        accessError = 'Login to verify guest list status';
+      } else {
+        const rollNumber = session.user.email.split('@')[0];
+        isAuthorized = event.allowedMembers.includes(rollNumber);
+        if (!isAuthorized) accessError = 'You are not on the guest list for this private event';
+      }
+    }
+
+    const canRegister = !deadlinePast && slotsLeft > 0 && !isEnded && !alreadyRegistered && event.isRegistrationOpen !== false && isAuthorized;
 
   const btnLabel = alreadyRegistered
     ? 'Already Registered ✓'
-    : deadlinePast
-      ? 'Registration Closed'
-      : slotsLeft === 0
-        ? 'Fully Booked'
-        : 'Register Now →';
-
-  const isCollegeEmail = (val) => /@kluniversity\.in$/i.test(val);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!isCollegeEmail(form.email)) {
-      setResult({ ok: false, msg: 'Invalid email. Use your college email only' });
-      return;
-    }
-    setSubmitting(true);
-    setResult(null);
-    try {
-      await eventService.register(event.id, form);
-      markRegistered(event.id, form.rollNumber);
-      setRegistered(prev => ({ ...prev, [event.id]: form.rollNumber }));
-      setResult({ ok: true, msg: '✓ You are registered! See you there.' });
-      setForm(EMPTY_REG);
-      setShowForm(false);
-      setEvent(prev => ({ ...prev, registeredCount: prev.registeredCount + 1 }));
-    } catch (err) {
-      setResult({ ok: false, msg: err.message });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    : !session
+      ? 'Login to Register'
+      : !isAuthorized
+        ? 'Access Restricted'
+        : (deadlinePast || event.isRegistrationOpen === false)
+          ? 'Registration Closed'
+          : slotsLeft === 0
+            ? 'Fully Booked'
+            : 'Register Now →';
 
   const handleOneClick = async () => {
     if (!session?.user) return;
@@ -141,8 +145,7 @@ const EventDetailPage = () => {
         rollNumber: session.user.email.split('@')[0]
       };
       await eventService.register(event.id, userData);
-      markRegistered(event.id, userData.rollNumber);
-      setRegistered(prev => ({ ...prev, [event.id]: userData.rollNumber }));
+      setIsRegistered(true);
       setResult({ ok: true, msg: '✓ Quick Registration Successful!' });
       setEvent(prev => ({ ...prev, registeredCount: prev.registeredCount + 1 }));
     } catch (err) {
@@ -162,7 +165,7 @@ const EventDetailPage = () => {
         {event.posterUrl && <meta property="og:image" content={event.posterUrl} />}
       </Helmet>
 
-      <div style={{ position: 'absolute', top: 30, left: '4%', zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 130, left: '4%', zIndex: 10 }}>
         <BackButton />
       </div>
 
@@ -192,11 +195,21 @@ const EventDetailPage = () => {
       <div className="event-detail__meta-grid">
         <div className="event-detail__meta-item">
           <span className="event-detail__meta-label"><Calendar size={14} className="events-icon"/> Date</span>
-          <span className="event-detail__meta-val">{new Date(event.startTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+          <span className="event-detail__meta-val">
+            {new Date(event.startTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {new Date(event.startTime).toDateString() !== new Date(event.endTime).toDateString() && (
+              <> - {new Date(event.endTime).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</>
+            )}
+          </span>
         </div>
         <div className="event-detail__meta-item">
           <span className="event-detail__meta-label"><Clock size={14} className="events-icon"/> Time</span>
-          <span className="event-detail__meta-val">{new Date(event.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} - {new Date(event.endTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span className="event-detail__meta-val">
+            {new Date(event.startTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} - {new Date(event.endTime).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            {new Date(event.startTime).toDateString() !== new Date(event.endTime).toDateString() && (
+              <span style={{ fontSize: '0.8em', opacity: 0.6, display: 'block' }}>(Cross-day event)</span>
+            )}
+          </span>
         </div>
         <div className="event-detail__meta-item">
           <span className="event-detail__meta-label"><Clock size={14} className="events-icon"/> Registration Deadline</span>
@@ -225,69 +238,33 @@ const EventDetailPage = () => {
         {result?.ok && (
           <div className="event-detail__reg-success">{result.msg}</div>
         )}
-        {!isEnded ? (
-          !showForm ? (
+        {accessError && !result?.ok && (
+          <div className="event-detail__reg-error" style={{ marginBottom: 20, textAlign: 'center' }}>
+            {accessError}
+          </div>
+        )}
+        {!result?.ok && (
+          !isEnded ? (
             <button
-              className={`event-detail__reg-btn ${!canRegister ? 'event-detail__reg-btn--disabled' : ''} ${alreadyRegistered ? 'event-detail__reg-btn--done' : ''}`}
+              className={`event-detail__reg-btn ${!canRegister && session ? 'event-detail__reg-btn--disabled' : ''} ${alreadyRegistered ? 'event-detail__reg-btn--done' : ''}`}
               onClick={() => {
-                if (!canRegister) return;
+                if (alreadyRegistered) return;
                 if (session) {
-                  // 1-Click Registration
+                  if (!canRegister) return;
                   handleOneClick();
                 } else {
-                  setShowForm(true);
+                  signIn('microsoft'); // Or just signIn() to show options
                 }
               }}
-              disabled={!canRegister || submitting}
+              disabled={(submitting) || (session && !canRegister)}
             >
               {submitting ? 'Registering...' : btnLabel}
             </button>
           ) : (
-            <form className="event-detail__form" onSubmit={handleSubmit}>
-              <h3 className="event-detail__form-title">Register for {event.title}</h3>
-              <input
-                required
-                placeholder="Full Name"
-                value={form.name}
-                onChange={e => setForm({ ...form, name: e.target.value })}
-                className="event-detail__input"
-              />
-              <input
-                required
-                placeholder="Roll Number"
-                value={form.rollNumber}
-                onChange={e => setForm({ ...form, rollNumber: e.target.value })}
-                className="event-detail__input"
-              />
-              <input
-                required
-                type="email"
-                placeholder="College Email"
-                value={form.email}
-                onChange={e => setForm({ ...form, email: e.target.value })}
-                className="event-detail__input"
-              />
-              {result && !result.ok && (
-                <div className="event-detail__reg-error">{result.msg}</div>
-              )}
-              <div className="event-detail__form-actions">
-                <button type="submit" className="event-detail__reg-btn" disabled={submitting || result?.ok}>
-                  {submitting ? 'Submitting...' : 'Confirm Registration'}
-                </button>
-                <button
-                  type="button"
-                  className="event-detail__cancel-btn"
-                  onClick={() => { setShowForm(false); setResult(null); }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            <button className="event-detail__reg-btn event-detail__reg-btn--disabled" disabled>
+              Event Ended
+            </button>
           )
-        ) : (
-          <button className="event-detail__reg-btn event-detail__reg-btn--disabled" disabled>
-            Event Ended
-          </button>
         )}
       </div>
     </div>

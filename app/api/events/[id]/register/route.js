@@ -18,9 +18,14 @@ export async function POST(request, { params }) {
 
         // Access Control
         if (event.accessType === 'domain') {
-            const hasDomain = event.allowedDomains.some(d => email.endsWith(`@${d.toLowerCase()}.com`) || (name && name.includes(d))); 
-            // Better: use session-based domain check if available, but for now we follow the user's logic.
-            // Wait, we should probably check against the Member's actual domain from DB.
+            const userDomain = email.split('@')[1]?.toLowerCase();
+            const isAllowed = event.allowedDomains.some(d => {
+                const domain = d.startsWith('@') ? d.slice(1).toLowerCase() : d.toLowerCase();
+                return userDomain === domain;
+            });
+            if (!isAllowed) {
+                return NextResponse.json({ error: `This event is restricted to specific domains: ${event.allowedDomains.join(', ')}` }, { status: 403 });
+            }
         } else if (event.accessType === 'private') {
             if (!event.allowedMembers.includes(rollNumber.trim())) {
                 return NextResponse.json({ error: 'You are not on the guest list for this private event' }, { status: 403 });

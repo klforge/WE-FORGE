@@ -6,7 +6,7 @@
   width: 95%;
   max-width: 1200px;
   z-index: 1000;
-  padding: 12px 24px;
+  padding: 8px 24px;
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
@@ -49,8 +49,10 @@
 }
 
 .navbar__logo img {
-  height: 32px;
+  height: 40px;
   width: auto;
+  transform: scale(1.5);
+  transform-origin: left center;
 }
 
 .navbar__logo-text {

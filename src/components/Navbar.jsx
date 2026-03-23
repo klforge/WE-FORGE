@@ -40,8 +40,7 @@ const Navbar = () => {
       <div className="navbar__container">
         {/* Logo */}
         <Link href="/" className="navbar__logo">
-          <img src="/images/KLFORGE logo.png" alt="KLFORGE" />
-          <span className="navbar__logo-text">KLFORGE</span>
+          <img src="/images/favicon.png?v=2" alt="KLFORGE" />
         </Link>
 
         {/* Desktop Links */}

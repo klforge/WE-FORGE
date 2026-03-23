@@ -7,11 +7,17 @@ import path from 'path';
 const UPLOAD_DIR = path.resolve(process.cwd(), 'public/uploads/events');
 const toSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+const parseArray = (str) => {
+    if (!str) return [];
+    try { return JSON.parse(str); } 
+    catch { return str.split(',').map(s => s.trim()).filter(Boolean); }
+};
+
 const checkStatus = async (events) => {
     const now = new Date();
     let updated = false;
     for (const e of events) {
-        if (e.status !== 'ended' && new Date(e.eventDate) < now) {
+        if (e.status !== 'ended' && new Date(e.endTime || e.eventDate) < now) {
             e.status = 'ended';
             await e.save();
             updated = true;
@@ -48,14 +54,19 @@ export async function POST(request) {
         const locationRaw = formData.get('location');
         const status = formData.get('status');
         const accessType = formData.get('accessType') || 'public';
-        const allowedDomains = formData.get('allowedDomains') ? JSON.parse(formData.get('allowedDomains')) : [];
-        const allowedMembers = formData.get('allowedMembers') ? JSON.parse(formData.get('allowedMembers')) : [];
-        const roles = formData.get('roles') ? JSON.parse(formData.get('roles')) : ['Participant', 'Volunteer', 'Organizer'];
+        const allowedDomains = parseArray(formData.get('allowedDomains'));
+        const allowedMembers = parseArray(formData.get('allowedMembers'));
+        
+        const rawRoles = formData.get('roles');
+        const roles = rawRoles ? parseArray(rawRoles) : ['Participant', 'Volunteer', 'Organizer'];
+        
         const isRegistrationOpen = formData.get('isRegistrationOpen') !== 'false';
+        const eventDate = formData.get('eventDate');
 
-        if (!title || !eventDate) return NextResponse.json({ error: 'Title and event date are required' }, { status: 400 });
+        if (!title || !startTime) return NextResponse.json({ error: 'Title and start time are required' }, { status: 400 });
 
-        const id = String(Date.now());
+        const dateStr = (eventDate || startTime).split('T')[0];
+        const id = `${toSlug(title)}-${dateStr}`;
         let posterUrl = '';
         const photoFile = formData.get('poster');
 
@@ -76,6 +87,7 @@ export async function POST(request) {
             slots: Number(slots) || 50,
             startTime,
             endTime,
+            eventDate: eventDate || startTime,
             registrationDeadline: registrationDeadline || startTime,
             venue: (venueRaw || locationRaw || '').trim(),
             status: status || 'upcoming',

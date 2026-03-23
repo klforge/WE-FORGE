@@ -7,15 +7,6 @@ import eventService from '../../src/services/eventService';
 import BackButton from '../../src/components/BackButton';
 import './page.css';
 
-const LS_KEY = 'klforge_registered_events';
-const getRegistered = () => {
-    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}'); } catch { return {}; }
-};
-const markRegistered = (eventId, rollNumber) => {
-    const data = getRegistered();
-    data[eventId] = rollNumber;
-    localStorage.setItem(LS_KEY, JSON.stringify(data));
-};
 
 const TYPE_COLORS = {
     workshop: '#3b82f6',
@@ -67,10 +58,9 @@ const EventCard = ({ event, alreadyRegistered, onRegistered, onViewDetail, sessi
         setResult(null);
         try {
             await eventService.register(event.id, form);
-            markRegistered(event.id, form.rollNumber);
             setResult({ ok: true, msg: '✓ Registered successfully!' });
             setForm(EMPTY_REG);
-            onRegistered(event.id, form.role || 'Participant');
+            onRegistered(event.id);
         } catch (err) {
             setResult({ ok: false, msg: err.message });
         } finally {
@@ -115,7 +105,12 @@ const EventCard = ({ event, alreadyRegistered, onRegistered, onViewDetail, sessi
                 <div className="events-page__meta-grid">
                     <div className="events-page__meta-item">
                         <span className="events-page__meta-label"><Calendar size={14} className="events-icon" /> Date</span>
-                        <span className="events-page__meta-value">{fmt(event.startTime)}</span>
+                        <span className="events-page__meta-value">
+                            {fmt(event.startTime)}
+                            {new Date(event.startTime).toDateString() !== new Date(event.endTime).toDateString() && (
+                                <> - {fmt(event.endTime)}</>
+                            )}
+                        </span>
                     </div>
                     <div className="events-page__meta-item">
                         <span className="events-page__meta-label"><Clock size={14} className="events-icon" /> Time Range</span>
@@ -189,14 +184,27 @@ const EventsPage = () => {
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [registered, setRegistered] = useState(getRegistered);
+    const [registered, setRegistered] = useState({});
 
     useEffect(() => {
         eventService.getAll()
             .then(setEvents)
             .catch(() => setError('Failed to load events'))
             .finally(() => setLoading(false));
-    }, []);
+
+        if (session?.user?.email) {
+            fetch(`/api/members/me/registrations`)
+                .then(res => res.json())
+                .then(regs => {
+                    const map = {};
+                    regs.forEach(r => map[r.eventId] = true);
+                    setRegistered(map);
+                })
+                .catch(err => console.error("Error fetching user registrations:", err));
+        } else {
+            setRegistered({});
+        }
+    }, [session]);
 
     const handleRegistered = (eventId) => {
         setRegistered(prev => ({ ...prev, [eventId]: true }));

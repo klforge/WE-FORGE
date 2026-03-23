@@ -7,6 +7,12 @@ import path from 'path';
 const UPLOAD_DIR = path.resolve(process.cwd(), 'public/uploads/events');
 const toSlug = (str) => str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
+const parseArray = (str) => {
+    if (!str) return [];
+    try { return JSON.parse(str); } 
+    catch { return str.split(',').map(s => s.trim()).filter(Boolean); }
+};
+
 export async function GET(request, { params }) {
     try {
         await connectDB();
@@ -40,11 +46,25 @@ export async function PUT(request, { params }) {
         if (formData.has('venue')) event.venue = formData.get('venue').trim();
         else if (formData.has('location')) event.venue = formData.get('location').trim();
         if (formData.has('accessType')) event.accessType = formData.get('accessType');
-        if (formData.has('allowedDomains')) event.allowedDomains = JSON.parse(formData.get('allowedDomains'));
-        if (formData.has('allowedMembers')) event.allowedMembers = JSON.parse(formData.get('allowedMembers'));
-        if (formData.has('roles')) event.roles = JSON.parse(formData.get('roles'));
+        if (formData.has('allowedDomains')) event.allowedDomains = parseArray(formData.get('allowedDomains'));
+        if (formData.has('allowedMembers')) event.allowedMembers = parseArray(formData.get('allowedMembers'));
+        if (formData.has('roles')) event.roles = parseArray(formData.get('roles'));
         if (formData.has('isRegistrationOpen')) event.isRegistrationOpen = formData.get('isRegistrationOpen') !== 'false';
 
+        if (!formData.has('eventDate') && formData.has('startTime')) event.eventDate = formData.get('startTime');
+
+        // Recalculate status based on new dates
+        const now = new Date();
+        const start = new Date(event.startTime);
+        const end = new Date(event.endTime || event.eventDate);
+
+        if (end < now) {
+            event.status = 'ended';
+        } else if (start <= now && end >= now) {
+            event.status = 'ongoing';
+        } else {
+            event.status = 'upcoming';
+        }
         const photoFile = formData.get('poster');
         if (photoFile && photoFile.size > 0) {
             await deleteFile(event.posterUrl, UPLOAD_DIR);
