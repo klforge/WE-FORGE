@@ -32,7 +32,8 @@ const ROLE_WEIGHTS = {
 const EMPTY_MEMBER_FORM = {
   name: '', role: 'Core Member', domain: 'General', rollNumber: '', email: '', 
   description: '', bio: '', skills: '', status: 'Online', 
-  department: '', telegram: '', github: '', linkedin: '', isSuspended: false
+  department: '', telegram: '', github: '', linkedin: '', isSuspended: false,
+  color: '#71C4FF'
 };
 
 const EMPTY_EVENT_FORM = {
@@ -211,27 +212,45 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  const { data: session, status: authStatus } = useSession();
+  // ── Password-gate auth (uses JWT cookie from /api/auth/login) ────────
+  const [isAdminAuthed, setIsAdminAuthed] = useState(false);
+  const [pwInput, setPwInput]             = useState('');
+  const [pwError, setPwError]             = useState('');
 
   useEffect(() => {
-    if (authStatus === 'unauthenticated') {
-      router.push('/login');
-    } else if (authStatus === 'authenticated') {
-      // Check if user has admin role (either from session or a quick fetch)
-      fetch('/api/auth/check')
-        .then(res => res.json())
-        .then(data => {
-          if (!data.authenticated) {
-            router.push('/profile'); 
-          } else {
-            setAdminInfo(data);
-            Promise.all([fetchMembers(), fetchEvents(), fetchNotices(), fetchProjects(), fetchMedia()])
-              .then(() => setLoading(false));
-          }
-        })
-        .catch(() => router.push('/profile'));
+    authService.checkAuth()
+      .then(isAuth => {
+        if (!isAuth) { setLoading(false); return; }
+        return fetch('/api/auth/check')
+          .then(r => r.json())
+          .then(data => {
+            if (data.authenticated) {
+              setAdminInfo(data);
+              setIsAdminAuthed(true);
+              return Promise.all([fetchMembers(), fetchEvents(), fetchNotices(), fetchProjects(), fetchMedia()])
+                .then(() => setLoading(false));
+            }
+            setLoading(false);
+          });
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleAdminPasswordLogin = async (e) => {
+    e.preventDefault();
+    setPwError('');
+    try {
+      await authService.login(pwInput);
+      setIsAdminAuthed(true);
+      setLoading(true);
+      const data = await fetch('/api/auth/check').then(r => r.json());
+      setAdminInfo(data);
+      await Promise.all([fetchMembers(), fetchEvents(), fetchNotices(), fetchProjects(), fetchMedia()]);
+      setLoading(false);
+    } catch (err) {
+      setPwError(err.message || 'Incorrect password');
     }
-  }, [authStatus, router]);
+  };
 
   // ── Members ──────────────────────────────────────────────
 
@@ -252,7 +271,8 @@ const AdminDashboard = () => {
       bio: m.bio, 
       skills: m.skills.join(', '), 
       status: m.status, 
-      telegram: m.telegram || '' 
+      telegram: m.telegram || '',
+      color: m.color || '#71C4FF'
     });
     setPhoto(null); setPhotoPreview(null); setCrop(undefined); setCompletedCrop(null);
     setShowMemberForm(true); setError('');
@@ -284,6 +304,7 @@ const AdminDashboard = () => {
       const fd = new FormData();
       fd.append('name', (memberForm.name || '').trim()); 
       fd.append('role', (memberForm.role || '').trim());
+      if (memberForm.color) fd.append('color', memberForm.color);
       fd.append('rollNumber', (memberForm.rollNumber || '').trim()); 
       fd.append('description', (memberForm.description || '').trim());
       fd.append('bio', (memberForm.bio || '').trim()); 
@@ -342,16 +363,29 @@ const AdminDashboard = () => {
     e.preventDefault(); setEventSaving(true); setError('');
     try {
       const fd = new FormData();
-      Object.entries(eventForm).forEach(([k, v]) => fd.append(k, v));
+      // Scalar fields only
+      fd.append('title', eventForm.title || '');
+      fd.append('description', eventForm.description || '');
+      fd.append('type', eventForm.type || '');
+      fd.append('points', String(eventForm.points ?? 0));
+      fd.append('slots', String(eventForm.slots ?? 50));
+      fd.append('venue', eventForm.venue || '');
+      fd.append('accessType', eventForm.accessType || 'public');
+      fd.append('isRegistrationOpen', String(eventForm.isRegistrationOpen ?? true));
+
+      // Date/time fields
+      if (eventForm.startTime) fd.append('startTime', eventForm.startTime);
+      if (eventForm.endTime) fd.append('endTime', eventForm.endTime);
+      if (eventForm.registrationDeadline) fd.append('registrationDeadline', eventForm.registrationDeadline);
+
+      // Array fields — serialize as JSON strings
+      fd.append('allowedDomains', JSON.stringify(eventForm.allowedDomains || []));
+      fd.append('allowedMembers', JSON.stringify((eventForm.allowedMembers || []).map(String)));
+      fd.append('roles', JSON.stringify(eventForm.roles || ['Participant', 'Volunteer', 'Organizer']));
+
       if (eventPoster) fd.append('poster', eventPoster);
-      if (eventEditing) {
-      fd.append('id', eventEditing); // eventEditing is the ID
-      if (typeof eventForm.startTime === 'string') fd.append('startTime', eventForm.startTime);
-      if (typeof eventForm.endTime === 'string') fd.append('endTime', eventForm.endTime);
-    } else {
-      fd.append('startTime', eventForm.startTime);
-      fd.append('endTime', eventForm.endTime);
-    }
+      if (eventEditing) fd.append('id', eventEditing);
+
       if (eventEditing) { await eventService.update(eventEditing, fd); } else { await eventService.create(fd); }
       setEventForm(EMPTY_EVENT_FORM); setShowEventForm(false); await fetchEvents();
     } catch (err) { setError(err.message); } finally { setEventSaving(false); }
@@ -457,20 +491,45 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = async () => { await signOut(); };
+  const handleLogout = async () => { await authService.logout(); setIsAdminAuthed(false); setPwInput(''); };
 
   if (loading) return <div className="admin-dash"><div className="admin-dash__loading">Loading...</div></div>;
+
+  if (!isAdminAuthed) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
+      <div style={{ width: 380, padding: '48px 40px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div style={{ textAlign: 'center' }}>
+          <Shield size={44} style={{ color: '#fff', marginBottom: 16 }} />
+          <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Admin Access</h1>
+          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: 8 }}>Enter the admin password to continue</p>
+        </div>
+        <form onSubmit={handleAdminPasswordLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <input
+            type="password"
+            value={pwInput}
+            onChange={e => setPwInput(e.target.value)}
+            placeholder="Admin password"
+            autoFocus
+            style={{ width: '100%', padding: '14px 18px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#fff', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
+          />
+          {pwError && <p style={{ color: '#ff4d4d', fontSize: '0.85rem', margin: 0 }}>{pwError}</p>}
+          <button type="submit" className="admin-dash__add-btn" style={{ width: '100%', justifyContent: 'center' }}>
+            Unlock Dashboard
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 
   // ── Nav ───────────────────────────────────────────────────
 
   const NAV_ITEMS = [
-    { id: 'members', label: 'Members', icon: <Users size={18} />, count: members.length, show: true },
-    { id: 'events', label: 'Events', icon: <Calendar size={18} />, count: events.length, show: adminInfo.isElite || adminInfo.domain === 'Protocol & Operations' },
-    { id: 'projects', label: 'Projects', icon: <FolderKanban size={18} />, count: projects.length, show: adminInfo.isElite || adminInfo.domain === 'Tech & Innovation' },
-    { id: 'notices', label: 'Notices', icon: <Bell size={18} />, count: notices.length, show: adminInfo.isElite },
-    { id: 'media', label: 'Media', icon: <ImageIcon size={18} />, count: media.length, show: adminInfo.isElite || adminInfo.domain === 'Media & Broadcasting' },
-    { id: 'domains', label: 'Domains', icon: <Globe size={18} />, show: adminInfo.isElite },
-  ].filter(item => item.show);
+    { id: 'members',  label: 'Members',  icon: <Users size={18} />,       count: members.length },
+    { id: 'events',   label: 'Events',   icon: <Calendar size={18} />,     count: events.length },
+    { id: 'projects', label: 'Projects', icon: <FolderKanban size={18} />, count: projects.length },
+    { id: 'notices',  label: 'Notices',  icon: <Bell size={18} />,         count: notices.length },
+    { id: 'media',    label: 'Media',    icon: <ImageIcon size={18} />,    count: media.length },
+  ];
 
   const downloadCSV = () => {
     const headers = ['Name', 'Email', 'Role', 'Domain', 'Roll Number'];
@@ -526,33 +585,38 @@ const AdminDashboard = () => {
 
     return (
       <>
-        <div className="admin-section__header">
-          <div>
-            <h2 className="admin-section__title">Team Members</h2>
-            <div className="admin-dash__filters">
-              <div className="admin-dash__search-bar">
-                <Search size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Search name, ID..." 
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <select value={memberFilter} onChange={e => setMemberFilter(e.target.value)} className="admin-dash__select">
-                <option value="all">All Domains</option>
-                <option value="student">Just Students (No Domain)</option>
-                {domains.map(d => <option key={d} value={d}>{d}</option>)}
-              </select>
-              <select value={memberSort} onChange={e => setMemberSort(e.target.value)} className="admin-dash__select">
-                <option value="hierarchy">Sort by Hierarchy</option>
-                <option value="name">Sort by Name</option>
-                <option value="roll">Sort by Roll #</option>
-              </select>
+        <div className="admin-section__header" style={{ alignItems: 'flex-start', flexDirection: 'column', gap: 16 }}>
+          <div className="admin-dash__title-row">
+            <h2 className="admin-section__title admin-section__title--large">Team Members</h2>
+            <div className="admin-dash__title-actions">
+              <button className="admin-dash__add-btn" onClick={openAddMember}><Plus size={18} /> Add Member</button>
               <button className="admin-dash__export-btn" onClick={downloadCSV}><Download size={16} /> Export CSV</button>
             </div>
           </div>
-          <button className="admin-dash__add-btn" onClick={openAddMember}><Plus size={18} /> Add Member</button>
+          
+          <div className="admin-dash__filter-row" style={{ width: '100%' }}>
+            <div className="admin-dash__search-bar">
+              <Search size={16} />
+              <input 
+                type="text" 
+                placeholder="Search name, ID, or domain..." 
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            <select value={memberSort} onChange={e => setMemberSort(e.target.value)} className="admin-dash__select">
+              <option value="hierarchy">Sort by Hierarchy</option>
+              <option value="name">Sort by Name</option>
+              <option value="roll">Sort by Roll #</option>
+            </select>
+
+            <select value={memberFilter} onChange={e => setMemberFilter(e.target.value)} className="admin-dash__select">
+              <option value="all">All Domains</option>
+              <option value="student">Just Students (No Domain)</option>
+              {domains.map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
+          </div>
         </div>
         {error && !showMemberForm && <div className="admin-dash__error">{error}</div>}
 
@@ -653,7 +717,7 @@ const AdminDashboard = () => {
     <>
       <div className="admin-section__header">
         <div>
-          <h2 className="admin-section__title">Events</h2>
+          <h2 className="admin-section__title admin-section__title--large">Events</h2>
           <p className="admin-section__subtitle">{events.length} event{events.length !== 1 ? 's' : ''}</p>
         </div>
         <button className="admin-dash__add-btn" onClick={openAddEvent}><Plus size={18} /> Add Event</button>
@@ -680,6 +744,7 @@ const AdminDashboard = () => {
                 <td><span className={`admin-dash__status admin-dash__status--${ev.status}`}>{ev.status}</span></td>
                 <td className="admin-dash__actions-cell">
                   <button className="admin-dash__icon-btn" title="View Event Page" onClick={() => router.push(`/events/${ev.id}`)}><Eye size={15} /></button>
+                  <button className="admin-dash__icon-btn" title="View Registrations" onClick={() => viewRegistrations(ev)}><Users size={15} /></button>
                   <button className="admin-dash__icon-btn admin-dash__icon-btn--edit" onClick={() => openEditEvent(ev)}><Edit3 size={15} /></button>
                   {eventDeleteConfirm === ev.id ? (
                     <span className="admin-dash__delete-confirm">Sure?
@@ -725,6 +790,7 @@ const AdminDashboard = () => {
             ) : (
               <div className="admin-mob-card__actions">
                 <button className="admin-mob-btn" onClick={() => router.push(`/events/${ev.id}`)}><Eye size={15} /> View</button>
+                <button className="admin-mob-btn" onClick={() => viewRegistrations(ev)}><Users size={15} /> Regs</button>
                 <button className="admin-mob-btn admin-mob-btn--edit" onClick={() => openEditEvent(ev)}><Edit3 size={15} /> Edit</button>
                 <button className="admin-mob-btn admin-mob-btn--delete" onClick={() => setEventDeleteConfirm(ev.id)}><Trash2 size={15} /></button>
               </div>
@@ -739,7 +805,7 @@ const AdminDashboard = () => {
     <>
       <div className="admin-section__header">
         <div>
-          <h2 className="admin-section__title">Notices</h2>
+          <h2 className="admin-section__title admin-section__title--large">Notices</h2>
           <p className="admin-section__subtitle">{notices.length} notice{notices.length !== 1 ? 's' : ''}</p>
         </div>
         <button className="admin-dash__add-btn" onClick={openAddNotice}><Plus size={18} /> Add Notice</button>
@@ -811,7 +877,7 @@ const AdminDashboard = () => {
     <>
       <div className="admin-section__header">
         <div>
-          <h2 className="admin-section__title">Projects</h2>
+          <h2 className="admin-section__title admin-section__title--large">Projects</h2>
           <p className="admin-section__subtitle">{projects.length} project{projects.length !== 1 ? 's' : ''}</p>
         </div>
         <button className="admin-dash__add-btn" onClick={openAddProject}><Plus size={18} /> Add Project</button>
@@ -1023,7 +1089,17 @@ const AdminDashboard = () => {
   // ── Render ────────────────────────────────────────────────
   return (
     <div className="admin-dash">
-      {/* ── Mobile sticky header (hidden on desktop via CSS) ── */}
+      {/* ── Mobile sticky header (visible on mobile only) ── */}
+      <header className="admin-mob-header">
+        <div className="admin-mob-header__brand">
+          <div className="admin-mob-header__logo">KF</div>
+          <h1 className="admin-mob-header__title">{NAV_ITEMS.find(n => n.id === activeSection)?.label || 'Dashboard'}</h1>
+        </div>
+        <button className="admin-mob-header__logout" onClick={handleLogout}>
+          <LogOut size={16} />
+          <span>Sign Out</span>
+        </button>
+      </header>
 
       {/* ── Desktop Sidebar (hidden on mobile via CSS) ── */}
       <aside className="admin-sidebar">
@@ -1174,7 +1250,11 @@ const AdminDashboard = () => {
               ) : (
                 <div className="admin-dash__field"><label>Role</label><input disabled value={memberForm.role} title="Only Zero Order can change roles/domains" /></div>
               )}
-
+              
+              <div className="admin-dash__field">
+                <label>Color</label>
+                <input type="color" value={memberForm.color} onChange={e => setMemberForm({ ...memberForm, color: e.target.value })} style={{ padding: '0', height: '37px', cursor: 'pointer', border: 'none', background: 'transparent' }} title="Choose Role Color" />
+              </div>
               <div className="admin-dash__field"><label>Status</label><select value={memberForm.status} onChange={e => setMemberForm({ ...memberForm, status: e.target.value })}><option>Online</option><option>Away</option><option>Busy</option></select></div>
               <div className="admin-dash__field admin-dash__field--full"><label>Short Description</label><input value={memberForm.description} onChange={e => setMemberForm({ ...memberForm, description: e.target.value })} placeholder="One-liner for team cards" /></div>
               <div className="admin-dash__field admin-dash__field--full"><label>Bio</label><textarea rows="3" value={memberForm.bio} onChange={e => setMemberForm({ ...memberForm, bio: e.target.value })} placeholder="About this member..." /></div>
@@ -1354,36 +1434,7 @@ const AdminDashboard = () => {
         </div>
       )}
 
-      {/* ── Registrations Modal ──────────────────────────── */}
-      {viewingRegs && (
-        <div className="admin-dash__overlay" data-lenis-prevent="true" onClick={() => setViewingRegs(null)}>
-          <div className="admin-dash__modal" onClick={e => e.stopPropagation()}>
-            <div className="admin-dash__modal-header">
-              <h2>Registrations — {viewingRegs.event.title}</h2>
-              <button type="button" className="admin-dash__close-btn" onClick={() => setViewingRegs(null)}><X size={20} /></button>
-            </div>
-            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', margin: '0 0 16px' }}>{viewingRegs.regs.length} registration{viewingRegs.regs.length !== 1 ? 's' : ''}</p>
-            <div className="admin-dash__table-wrap" data-lenis-prevent="true">
-              <table className="admin-dash__table">
-                <thead><tr><th>Name</th><th>Roll Number</th><th>Email</th><th>Registered At</th></tr></thead>
-                <tbody>
-                  {viewingRegs.regs.map(r => (
-                    <tr key={r.id}>
-                      <td className="admin-dash__name-cell">{r.name}</td>
-                      <td className="admin-dash__mono">{r.rollNumber}</td>
-                      <td>{r.email}</td>
-                      <td className="admin-dash__mono">{fmtDate(r.registeredAt)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {viewingRegs.regs.length === 0 && <div className="admin-dash__empty">No registrations yet.</div>}
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* ── Notice Modal ─────────────────────────────────── */}
       {showNoticeForm && (
         <div className="admin-dash__overlay" data-lenis-prevent="true" onClick={closeNoticeForm}>
           <form className="admin-dash__modal" onClick={e => e.stopPropagation()} onSubmit={handleNoticeSubmit}>
@@ -1434,6 +1485,69 @@ const AdminDashboard = () => {
               <button type="submit" className="admin-dash__save-btn" disabled={projectSaving}>{projectSaving ? 'Saving...' : projectEditing ? 'Update Project' : 'Add Project'}</button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* ── Registrations Modal ────────────────────────────── */}
+      {showRegsModal && selectedEventForRegs && (
+        <div className="admin-dash__overlay" data-lenis-prevent="true" onClick={() => setShowRegsModal(false)}>
+          <div className="admin-dash__modal admin-dash__modal--large" onClick={e => e.stopPropagation()}>
+            <div className="admin-dash__modal-header">
+              <div>
+                <h2>Registrations</h2>
+                <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.85rem', margin: 0, marginTop: 4 }}>{selectedEventForRegs.title}</p>
+              </div>
+              <button type="button" className="admin-dash__close-btn" onClick={() => setShowRegsModal(false)}><X size={20} /></button>
+            </div>
+            
+            {regsLoading ? (
+              <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.5)' }}>Loading registrations...</div>
+            ) : (
+              <div className="admin-dash__table-wrap" style={{ marginTop: 20, maxHeight: '60vh', overflowY: 'auto' }}>
+                <table className="admin-dash__table">
+                  <thead style={{ position: 'sticky', top: 0, background: '#111', zIndex: 10 }}>
+                    <tr>
+                      <th>Name</th>
+                      <th>Roll Number</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {eventRegs.length === 0 ? (
+                      <tr><td colSpan="5" style={{ textAlign: 'center', color: 'rgba(255,255,255,0.4)', padding: 20 }}>No one has registered yet.</td></tr>
+                    ) : eventRegs.map(reg => (
+                      <tr key={reg.id}>
+                        <td>{reg.name}</td>
+                        <td className="admin-dash__mono">{reg.rollNumber}</td>
+                        <td style={{ color: 'rgba(255,255,255,0.6)' }}>{reg.email.replace('@kluniversity.in', '')}</td>
+                        <td>
+                          <select 
+                            value={reg.role || 'Participant'} 
+                            onChange={(e) => updateMemberRole(reg.id, e.target.value)}
+                            style={{ 
+                              background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)', 
+                              color: '#fff', padding: '4px 8px', borderRadius: 6, fontSize: '0.8rem', outline: 'none' 
+                            }}
+                          >
+                            <option value="Participant">Participant</option>
+                            <option value="Volunteer">Volunteer</option>
+                            <option value="Organizer">Organizer</option>
+                          </select>
+                        </td>
+                        <td style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem' }}>{new Date(reg.registeredAt).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            <div className="admin-dash__modal-actions" style={{ marginTop: 24 }}>
+              <button type="button" className="admin-dash__cancel-btn" onClick={() => setShowRegsModal(false)}>Close</button>
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquarePlus, Plus, Minus, ChevronLeft } from 'lucide-react';
+import { MessageSquarePlus, Plus, Minus } from 'lucide-react';
 import './page.css';
 
 const faqs = [
@@ -48,9 +48,16 @@ const FAQPage = () => {
           <div className="faq-page__assistance">
             <p className="faq-page__assist-text">Can't find what you are looking for?</p>
             <h2 className="faq-page__assist-heading">
-              We are available to<br />assist you via chat.
+              We are here to help you.
             </h2>
-            <div className="faq-page__chat-icon-wrapper">
+            <div 
+              className="faq-page__chat-icon-wrapper"
+              onClick={() => window.location.href = 'mailto:klforge@kluniversity.in?subject=Help%20Request&body=Hi%20KLFORGE%20Team%2C%0A%0A'}
+              role="button"
+              tabIndex={0}
+              title="Email us"
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') window.location.href = 'mailto:klforge@kluniversity.in?subject=Help%20Request&body=Hi%20KLFORGE%20Team%2C%0A%0A'; }}
+            >
               <MessageSquarePlus size={36} className="faq-page__chat-icon" />
             </div>
           </div>

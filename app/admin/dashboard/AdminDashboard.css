@@ -214,10 +214,50 @@
   margin: 0;
 }
 
+.admin-section__title--large {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
 .admin-section__subtitle {
   color: rgba(255, 255, 255, 0.35);
   font-size: 0.82rem;
   margin: 4px 0 0;
+}
+
+/* Filter row wrapper: puts two selects side by side */
+.admin-dash__filter-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.admin-dash__filter-row .admin-dash__select {
+  flex: 0 0 auto;
+  min-width: 150px;
+}
+
+.admin-dash__filter-row .admin-dash__search-bar {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Title row: heading left, action buttons right */
+.admin-dash__title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.admin-dash__title-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 /* ═══════════════════ PLACEHOLDER SECTIONS ═══════════════════ */
@@ -277,6 +317,9 @@
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s;
+  white-space: nowrap;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .admin-dash__add-btn:hover {
@@ -384,6 +427,48 @@
 .admin-dash__status--busy {
   background: rgba(255, 60, 60, 0.15);
   color: #ff6b6b;
+}
+
+/* ── Suppress browser blue focus rings across entire admin ── */
+.admin-dash button:focus,
+.admin-dash input:focus,
+.admin-dash select:focus,
+.admin-dash textarea:focus,
+.admin-mob-tab:focus,
+.admin-mob-btn:focus,
+.admin-sidebar__item:focus,
+.admin-sidebar__logout:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ── Access type tag (public / domain / private) ── */
+.admin-dash__access-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.admin-dash__access-tag--public {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.admin-dash__access-tag--domain {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.admin-dash__access-tag--private {
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 /* Drag handle */
@@ -566,6 +651,13 @@ tr[draggable]:active {
   position: relative; /* For picker positioning */
 }
 
+.admin-dash__field-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  width: 100%;
+}
+
 .admin-dash__field--full {
   grid-column: 1 / -1;
 }
@@ -620,10 +712,11 @@ tr[draggable]:active {
 .admin-dash__field select {
   appearance: none;
   cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.4)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
   background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 30px;
+  background-position: right 12px center;
+  background-size: 14px;
+  padding-right: 36px;
 }
 
 /* Global Fix for Select Options (many browsers) */
@@ -1258,13 +1351,63 @@ select option {
     margin-bottom: 18px;
   }
 
-  .admin-dash__add-btn {
+  /* Title row: on mobile, stack title then wrap buttons below */
+  .admin-dash__title-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Add Member + Export CSV: equal width, side by side */
+  .admin-dash__title-actions {
+    display: flex;
+    gap: 8px;
     width: 100%;
+  }
+
+  .admin-dash__title-actions .admin-dash__add-btn,
+  .admin-dash__title-actions .admin-dash__export-btn {
+    flex: 1;
     justify-content: center;
+    min-height: 48px;
+    font-size: 0.88rem;
+  }
+
+  /* Filter row: flex wrap so search takes full row, dropdowns share second row */
+  .admin-dash__filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .admin-dash__filter-row .admin-dash__search-bar {
+    width: 100%;
+    flex: none;
+    min-width: 0;
+  }
+
+  .admin-dash__filter-row .admin-dash__select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Export button standalone (outside title-actions) – full width on mobile */
+  .admin-dash__export-btn {
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  /* Section header column on mobile */
+  .admin-section__title--large {
+    font-size: 1.35rem;
+  }
+
+  .admin-dash__add-btn {
     padding: 13px 20px;
     font-size: 0.95rem;
     border-radius: 12px;
     min-height: 48px;
+    white-space: nowrap;
   }
 
   /* ── Hide desktop tables ── */
@@ -1302,6 +1445,16 @@ select option {
     border-radius: 10px;
     object-fit: cover;
     background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+  }
+
+  /* Event poster thumbnail — wider rectangle */
+  .admin-mob-card__avatar--event {
+    width: 72px;
+    height: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: rgba(255, 255, 255, 0.04);
     flex-shrink: 0;
   }
 
@@ -1524,7 +1677,8 @@ select option {
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 10px;
   padding: 0 14px;
-  min-width: 240px;
+  flex: 1;
+  min-width: 200px;
   transition: all 0.2s;
 }
 
