@@ -1,18 +1,17 @@
 'use client';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, ShieldCheck, Mail, AlertCircle } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import './page.css';
 
-export default function LoginPage() {
+function LoginContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
   const isSuspended = error === 'SUSPENDED' || error === 'CallbackRouteError'; 
-  // NextAuth sometimes wraps the thrown error in CallbackRouteError
 
   if (status === 'authenticated') {
     router.push('/profile');
@@ -71,5 +70,15 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="login-page" style={{ 
+      display: 'flex', justifyContent: 'center', alignItems: 'center', color: 'rgba(255,255,255,0.4)', minHeight: '100vh', background: '#000'
+    }}>Loading secure portal...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
