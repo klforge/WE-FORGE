@@ -1,11 +1,13 @@
-# ─── Stage 1: Install dependencies ─────────────────────────────────────────
+# ─── Stage 1: Install ALL dependencies (including devDeps for build) ────────
 FROM node:20-alpine AS deps
 
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+# Full install: Next.js build toolchain (e.g. SWC, ESLint) lives in devDeps.
+# The runner stage uses standalone output so node_modules is not copied there.
+RUN npm ci
 
 # ─── Stage 2: Build ──────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
