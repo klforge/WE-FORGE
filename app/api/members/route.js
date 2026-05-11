@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
-import connectDB from '@/lib/db';
-import Member from '@/lib/models/Member';
+import connectDB from '../../../lib/db';
+import Member from '../../../lib/models/Member';
 import { saveFile } from '@/lib/uploadHelper';
 import path from 'path';
 

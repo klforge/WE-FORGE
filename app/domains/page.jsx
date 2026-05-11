@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import BackButton from '../../src/components/BackButton';
+import Footer from '../../src/components/Footer';
 import './page.css';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -200,6 +201,9 @@ const DomainsPage = () => {
           })}
         </div>
       </section>
+
+      {/* ── Footer ── */}
+      <Footer />
     </div>
   );
 };

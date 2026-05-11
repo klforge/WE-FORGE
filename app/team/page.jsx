@@ -32,10 +32,10 @@ const TeamPage = () => {
   useEffect(() => {
     memberService.getAll()
       .then((data) => {
-        // Filter out general people
-        const filtered = data.filter(m => m.domain !== 'General' && m.role !== 'Student');
+        // Show all members from DB
+        const filtered = data;
         
-        const uniqueDomains = ['All', ...new Set(filtered.map(m => m.domain || 'General'))].filter(d => d !== 'General');
+        const uniqueDomains = ['All', ...new Set(filtered.map(m => m.domain || 'General'))];
         setDomains(uniqueDomains);
 
         // Group and Sort
@@ -91,7 +91,6 @@ const TeamPage = () => {
             .map(([domain, cards]) => (
               <div key={domain} className="team-page__domain-section">
                 <h2 className="team-page__domain-title">
-                  <span className="team-page__domain-dot" />
                   {domain}
                 </h2>
                 <div className="team-page__cards">

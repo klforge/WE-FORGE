@@ -71,7 +71,7 @@ const ProfilePage = () => {
           <div className="profile-page__bio-section">
             <h1 className="profile-page__name">{profile.name}</h1>
             <div className="profile-page__role-row">
-              <span className="profile-page__title">{profile.role}</span>
+              <span className="profile-page__title" style={{ color: profile.color || '#71c4ff' }}>{profile.role}</span>
               <span className="profile-page__roll-number">{profile.rollNumber}</span>
             </div>
 

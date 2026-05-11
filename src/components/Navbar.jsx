@@ -35,6 +35,10 @@ const Navbar = () => {
     setIsOpen(false);
   }, [pathname]);
 
+  if (pathname && pathname.startsWith('/admin')) {
+    return null;
+  }
+
   return (
     <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${isOpen ? 'navbar--open' : ''}`}>
       <div className="navbar__container">

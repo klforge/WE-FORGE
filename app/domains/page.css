@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap');
+
 .domains-page {
   background-color: #050508;
   color: #fff;
@@ -35,14 +37,15 @@
 }
 
 .domains-hero__title-our {
-  font-family: 'La Belle Aurore', cursive;
-  font-size: clamp(4rem, 12vw, 10rem);
+  font-family: 'Dancing Script', cursive;
+  font-size: clamp(3rem, 10vw, 7.5rem);
+  font-weight: 700;
   color: #d9f92e; /* Neon lime */
   position: absolute;
-  top: -8%;
-  left: -2%;
+  top: -30%;
+  left: -8%;
   z-index: 2;
-  transform: rotate(-4deg);
+  transform: rotate(-8deg);
   line-height: 1;
   text-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
@@ -335,6 +338,8 @@
   }
 
   .domains-hero__title-our {
-    font-size: clamp(3rem, 15vw, 6rem);
+    font-size: clamp(2.5rem, 12vw, 4.5rem);
+    top: -35%;
+    left: -5%;
   }
 }

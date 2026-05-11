@@ -102,12 +102,8 @@ const EventDetailPage = () => {
         isAuthorized = false;
         accessError = 'Login to verify domain access';
       } else {
-        const userDomain = session.user.email.split('@')[1]?.toLowerCase();
-        isAuthorized = event.allowedDomains.some(d => {
-          const domain = d.startsWith('@') ? d.slice(1).toLowerCase() : d.toLowerCase();
-          return userDomain === domain;
-        });
-        if (!isAuthorized) accessError = `Restricted to: ${event.allowedDomains.join(', ')}`;
+        // Backend will verify if the user's KLFORGE Team domain matches event's allowedDomains
+        isAuthorized = true;
       }
     } else if (event.accessType === 'private') {
       if (!session) {

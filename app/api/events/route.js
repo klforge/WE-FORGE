@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db';
+export const dynamic = 'force-dynamic';
 import Event from '@/lib/models/Event';
 import { saveFile } from '@/lib/uploadHelper';
 import path from 'path';

@@ -103,6 +103,7 @@ export function ExpandableCard({ cards }) {
                   <motion.p
                     layoutId={`role-${active.name}-${id}`}
                     className="expandable-card-expanded__role"
+                    style={{ color: active.color }}
                   >
                     {active.role}
                   </motion.p>
@@ -167,6 +168,7 @@ export function ExpandableCard({ cards }) {
               <motion.p
                 layoutId={`role-${card.name}-${id}`}
                 className="expandable-card-item__role"
+                style={{ color: card.color }}
               >
                 {card.role}
               </motion.p>

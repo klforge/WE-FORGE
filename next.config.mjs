@@ -1,4 +1,5 @@
 /** @type {import('next').NextConfig} */
+// restart trigger
 const nextConfig = {
   images: {
     remotePatterns: [

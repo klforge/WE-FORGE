@@ -17,18 +17,24 @@ export async function POST(request, { params }) {
         if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
         // Access Control
-        if (event.accessType === 'domain') {
-            const userDomain = email.split('@')[1]?.toLowerCase();
-            const isAllowed = event.allowedDomains.some(d => {
-                const domain = d.startsWith('@') ? d.slice(1).toLowerCase() : d.toLowerCase();
-                return userDomain === domain;
-            });
-            if (!isAllowed) {
-                return NextResponse.json({ error: `This event is restricted to specific domains: ${event.allowedDomains.join(', ')}` }, { status: 403 });
+        if (event.accessType === 'domain' || event.accessType === 'private') {
+            // We need to verify against the Member collection for domain/private access
+            const { default: Member } = await import('@/lib/models/Member');
+            const memberDoc = await Member.findOne({ rollNumber: new RegExp(`^${rollNumber.trim()}$`, 'i') });
+            
+            if (!memberDoc) {
+                return NextResponse.json({ error: 'You must be a registered KLFORGE member to access this event' }, { status: 403 });
             }
-        } else if (event.accessType === 'private') {
-            if (!event.allowedMembers.includes(rollNumber.trim())) {
-                return NextResponse.json({ error: 'You are not on the guest list for this private event' }, { status: 403 });
+
+            if (event.accessType === 'domain') {
+                const userClubDomain = memberDoc.domain;
+                if (!event.allowedDomains.includes(userClubDomain)) {
+                    return NextResponse.json({ error: `This event is restricted to: ${event.allowedDomains.join(', ')}` }, { status: 403 });
+                }
+            } else if (event.accessType === 'private') {
+                if (!event.allowedMembers.includes(rollNumber.trim()) && !event.allowedMembers.includes(Number(rollNumber.trim()))) {
+                    return NextResponse.json({ error: 'You are not on the guest list for this private event' }, { status: 403 });
+                }
             }
         }
 
@@ -43,7 +49,7 @@ export async function POST(request, { params }) {
             return NextResponse.json({ error: 'No slots remaining' }, { status: 400 });
         }
 
-        const duplicate = await Registration.findOne({ eventId: event.id, rollNumber: rollNumber.trim() });
+        const duplicate = await Registration.findOne({ eventId: event.id, rollNumber: new RegExp(`^${rollNumber.trim()}$`, 'i') });
         if (duplicate) return NextResponse.json({ error: 'Already registered' }, { status: 409 });
 
         const newReg = new Registration({

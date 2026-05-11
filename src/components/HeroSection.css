@@ -208,7 +208,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  padding: 48px clamp(28px, 4vw, 64px);
+  padding: 120px clamp(28px, 4vw, 64px) 48px;
   gap: 24px;
 }
 
@@ -341,7 +341,7 @@
   }
 
   .hero__content {
-    padding: 32px 28px;
+    padding: 100px 28px 32px;
     flex-direction: column;
     align-items: flex-start;
   }
@@ -377,7 +377,7 @@
   }
 
   .hero__content {
-    padding: 24px 20px;
+    padding: 100px 20px 24px;
     align-items: center;
     text-align: center;
   }

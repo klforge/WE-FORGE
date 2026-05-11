@@ -34,6 +34,7 @@ const EMPTY_REG = { name: '', rollNumber: '', email: '' };
 const EventCard = ({ event, alreadyRegistered, onRegistered, onViewDetail, session }) => {
     const [showForm, setShowForm] = useState(false);
     const [form, setForm] = useState(EMPTY_REG);
+    const [showPoster, setShowPoster] = useState(false);
 
     useEffect(() => {
         if (session?.user) {
@@ -49,8 +50,6 @@ const EventCard = ({ event, alreadyRegistered, onRegistered, onViewDetail, sessi
 
     const slotsLeft = event.slots - event.registeredCount;
     const deadlinePast = new Date(event.registrationDeadline) < new Date();
-
-    const isCollegeEmail = (val) => /@kluniversity\.in$/i.test(val);
 
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
@@ -68,108 +67,121 @@ const EventCard = ({ event, alreadyRegistered, onRegistered, onViewDetail, sessi
         }
     };
 
-    const handleOneClick = () => {
-        handleSubmit();
-    };
+    const handleOneClick = () => handleSubmit();
 
     const now = new Date();
     const start = new Date(event.startTime);
     const end = new Date(event.endTime);
     const currentStatus = now > end ? 'ended' : now >= start ? 'ongoing' : 'upcoming';
-
     const isEnded = currentStatus === 'ended';
     const canRegister = !deadlinePast && slotsLeft > 0 && !isEnded && !alreadyRegistered;
 
-    const btnLabel = alreadyRegistered
-        ? 'Already Registered ✓'
-        : deadlinePast ? 'Registration Closed'
-            : slotsLeft === 0 ? 'Fully Booked'
-                : 'Register Now';
+    const btnLabel = alreadyRegistered 
+        ? 'Already Registered ✓' 
+        : deadlinePast ? 'Registration Closed' 
+        : slotsLeft === 0 ? 'Fully Booked' 
+        : 'Register Now';
 
     return (
-        <div className="events-page__card">
-            {event.posterUrl && (
-                <div className="events-page__poster-wrap">
-                    <img src={event.posterUrl} alt={event.title} className="events-page__poster" />
+        <div className="event-card">
+            {/* Poster Header */}
+            {event.posterUrl ? (
+                <>
+                <div className="event-card__cover" onClick={() => setShowPoster(true)}>
+                    <img src={event.posterUrl} alt={event.title} className="event-card__img" />
+                    <div className="event-card__overlay-badges">
+                        <span className="event-card__badge" style={{ background: TYPE_COLORS[event.type] || '#555' }}>{event.type}</span>
+                        <span className={`event-card__badge event-card__badge--${currentStatus}`}>{STATUS_LABELS[currentStatus]?.label}</span>
+                    </div>
+                </div>
+                {showPoster && (
+                    <div className="event-poster-modal" onClick={() => setShowPoster(false)}>
+                        <div className="event-poster-modal__content" onClick={e => e.stopPropagation()}>
+                            <img src={event.posterUrl} alt={event.title} className="event-poster-modal__img" />
+                            <button className="event-poster-modal__close" onClick={() => setShowPoster(false)}>✕</button>
+                        </div>
+                    </div>
+                )}
+                </>
+            ) : (
+                <div className="event-card__cover event-card__cover--fallback">
+                    <CalendarDays size={48} opacity={0.2} />
+                    <div className="event-card__overlay-badges">
+                        <span className="event-card__badge" style={{ background: TYPE_COLORS[event.type] || '#555' }}>{event.type}</span>
+                        <span className={`event-card__badge event-card__badge--${currentStatus}`}>{STATUS_LABELS[currentStatus]?.label}</span>
+                    </div>
                 </div>
             )}
-            <div className="events-page__card-body">
-                <div className="events-page__card-top">
-                    <span className="events-page__type-badge" style={{ background: TYPE_COLORS[event.type] || '#555' }}>{event.type}</span>
-                    <span className={`events-page__status ${STATUS_LABELS[currentStatus]?.cls}`}>{STATUS_LABELS[currentStatus]?.label}</span>
-                </div>
 
-                <h2 className="events-page__card-title">{event.title}</h2>
-                {event.description && <p className="events-page__card-desc">{event.description}</p>}
+            {/* Body */}
+            <div className="event-card__body">
+                <h2 className="event-card__title">{event.title}</h2>
+                {event.description && <p className="event-card__desc">{event.description}</p>}
 
-                <div className="events-page__meta-grid">
-                    <div className="events-page__meta-item">
-                        <span className="events-page__meta-label"><Calendar size={14} className="events-icon" /> Date</span>
-                        <span className="events-page__meta-value">
+                <div className="event-card__details">
+                    <div className="event-card__detail">
+                        <Calendar size={15} className="event-card__icon" />
+                        <span>
                             {fmt(event.startTime)}
-                            {new Date(event.startTime).toDateString() !== new Date(event.endTime).toDateString() && (
-                                <> - {fmt(event.endTime)}</>
-                            )}
+                            {new Date(event.startTime).toDateString() !== new Date(event.endTime).toDateString() && ` - ${fmt(event.endTime)}`}
                         </span>
                     </div>
-                    <div className="events-page__meta-item">
-                        <span className="events-page__meta-label"><Clock size={14} className="events-icon" /> Time Range</span>
-                        <span className="events-page__meta-value">{fmtTime(event.startTime)} - {fmtTime(event.endTime)}</span>
-                    </div>
-                    <div className="events-page__meta-item">
-                        <span className="events-page__meta-label"><Users size={14} className="events-icon" /> Deadline</span>
-                        <span className="events-page__meta-value">{fmt(event.registrationDeadline)}</span>
+                    <div className="event-card__detail">
+                        <Clock size={15} className="event-card__icon" />
+                        <span>{fmtTime(event.startTime)} - {fmtTime(event.endTime)}</span>
                     </div>
                     {(event.venue || event.location) && (
-                        <div className="events-page__meta-item">
-                            <span className="events-page__meta-label"><MapPin size={14} className="events-icon" /> Venue</span>
-                            <span className="events-page__meta-value">{event.venue || event.location}</span>
+                        <div className="event-card__detail">
+                            <MapPin size={15} className="event-card__icon" />
+                            <span>{event.venue || event.location}</span>
                         </div>
                     )}
-                    <div className="events-page__meta-item">
-                        <span className="events-page__meta-label"><Users size={14} className="events-icon" /> Slots</span>
-                        <span className={`events-page__meta-value ${slotsLeft === 0 ? 'events-page__meta-value--danger' : ''}`}>
-                            {slotsLeft > 0 ? `${slotsLeft} of ${event.slots} left` : 'Full'}
+                    <div className="event-card__detail">
+                        <Users size={15} className="event-card__icon" />
+                        <span className={slotsLeft === 0 ? 'event-card__danger' : ''}>
+                            {slotsLeft > 0 ? `${slotsLeft} of ${event.slots} slots left` : 'Fully Booked'}
                         </span>
                     </div>
                 </div>
 
-                <div className="events-page__card-actions">
-                    <button className="events-page__detail-btn" onClick={() => onViewDetail(event.id)}>
-                        View Details →
+                {/* Actions */}
+                <div className="event-card__actions">
+                    <button className="event-card__btn-view" onClick={() => onViewDetail(event.id)}>
+                        More Info →
                     </button>
+                    
                     {!isEnded ? (
                         alreadyRegistered ? (
-                            <button className="events-page__register-btn events-page__register-btn--done" disabled>Already Registered ✓</button>
+                            <button className="event-card__btn-reg event-card__btn-reg--done" disabled>Registered ✓</button>
                         ) : !canRegister ? (
-                            <button className="events-page__register-btn events-page__register-btn--disabled" disabled>{btnLabel}</button>
+                            <button className="event-card__btn-reg event-card__btn-reg--disabled" disabled>{btnLabel}</button>
                         ) : session ? (
-                            <button className="events-page__register-btn events-page__register-btn--oneclick" onClick={handleOneClick} disabled={submitting}>
-                                <Zap size={14} /> {submitting ? 'Registering...' : 'One-Click Join'}
+                            <button className="event-card__btn-reg event-card__btn-reg--zap" onClick={handleOneClick} disabled={submitting}>
+                                <Zap size={15} /> {submitting ? 'Registering...' : 'One-Click Join'}
                             </button>
                         ) : !showForm ? (
-                            <button className="events-page__register-btn" onClick={() => setShowForm(true)}>{btnLabel}</button>
+                            <button className="event-card__btn-reg" onClick={() => setShowForm(true)}>{btnLabel}</button>
                         ) : (
-                            <form className="events-page__reg-form" onSubmit={handleSubmit}>
-                                <div className="events-page__reg-form-header">
-                                    <h3>Register for {event.title}</h3>
-                                    <button type="button" className="events-page__reg-close" onClick={() => { setShowForm(false); setResult(null); }}>✕</button>
+                            <form className="event-card__form" onSubmit={handleSubmit}>
+                                <div className="event-card__form-head">
+                                    <h4>Sign Up</h4>
+                                    <button type="button" onClick={() => { setShowForm(false); setResult(null); }}>✕</button>
                                 </div>
                                 <input required placeholder="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
                                 <input required placeholder="Roll Number" value={form.rollNumber} onChange={e => setForm({ ...form, rollNumber: e.target.value })} />
                                 <input required type="email" placeholder="College Email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
                                 {result && (
-                                    <div className={`events-page__reg-result ${result.ok ? 'events-page__reg-result--ok' : 'events-page__reg-result--err'}`}>
+                                    <div className={`event-card__msg ${result.ok ? 'event-card__msg--ok' : 'event-card__msg--err'}`}>
                                         {result.msg}
                                     </div>
                                 )}
-                                <button type="submit" className="events-page__register-btn" disabled={submitting || result?.ok}>
-                                    {submitting ? 'Submitting...' : 'Confirm Registration'}
+                                <button type="submit" className="event-card__btn-submit" disabled={submitting || result?.ok}>
+                                    {submitting ? 'Submitting...' : 'Confirm'}
                                 </button>
                             </form>
                         )
                     ) : (
-                        <button className="events-page__register-btn events-page__register-btn--disabled" disabled>Event Ended</button>
+                        <button className="event-card__btn-reg event-card__btn-reg--disabled" disabled>Event Ended</button>
                     )}
                 </div>
             </div>
@@ -215,20 +227,8 @@ const EventsPage = () => {
         router.push(`/events/${encodeURIComponent(eventId)}`);
     };
 
-    // Filtered Events
-    const filteredEvents = events.filter(ev => {
-        if (ev.accessType === 'public' || !ev.accessType) return true;
-        if (!session) return false; // Private/Domain events require login
-        
-        const user = session.user;
-        if (ev.accessType === 'domain') {
-            return ev.allowedDomains.includes(user.domain);
-        }
-        if (ev.accessType === 'private') {
-            return ev.allowedMembers.includes(user.rollNumber);
-        }
-        return false;
-    });
+    // Allow all events to act as a public gallery. Registration restrictions are handled securely by the backend.
+    const displayEvents = events;
 
     return (
         <div className="events-page">
@@ -242,13 +242,13 @@ const EventsPage = () => {
 
             {!loading && !error && (
                 <div className="events-page__section">
-                    {!events.length ? (
+                    {!displayEvents.length ? (
                         <div style={{ padding: '40px 24px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', fontSize: '0.95rem' }}>
                             No events to show right now.
                         </div>
                     ) : (
                         <div className="events-page__grid">
-                            {filteredEvents.map(event => (
+                            {displayEvents.map(event => (
                                 <EventCard
                                     key={event.id}
                                     event={event}

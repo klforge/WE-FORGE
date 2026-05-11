@@ -8,12 +8,19 @@ async function safeJson(res) {
 
 // ── Helpers ──────────────────────────────────────────────
 
-export const nameToSlug = (name) =>
-  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+export const nameToSlug = (name) => {
+  if (!name) return '';
+  // Remove all non-alphanumeric, split by space, join first and second name, ignore extra names
+  const parts = name.trim().toLowerCase().split(/\s+/);
+  if (parts.length === 1) return parts[0].replace(/[^a-z0-9]/g, '');
+  // Only use first and second name, remove non-alphanumeric, join
+  return (parts[0] + parts[1]).replace(/[^a-z0-9]/g, '');
+};
 
 export const getAvatarUrl = (member) => {
   if (member.photoUrl) return member.photoUrl;
-  return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&size=400&background=1a1a2e&color=71C4FF`;
+  const colorHex = (member.color && member.color.startsWith('#')) ? member.color.replace('#', '') : '71C4FF';
+  return `https://ui-avatars.com/api/?name=${encodeURIComponent(member.name)}&size=400&background=1a1a2e&color=${colorHex}`;
 };
 
 export const toTeamCards = (members) =>
@@ -22,6 +29,7 @@ export const toTeamCards = (members) =>
     role: `${m.role}  •  ${m.rollNumber}`,
     description: m.description,
     profileLink: `/${m.id}`,
+    color: m.color || '#71C4FF',
   }));
 
 export const findBySlug = (members, slug) =>
