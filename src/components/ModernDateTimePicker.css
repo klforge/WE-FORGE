@@ -1,0 +1,115 @@
+.modern-dt-picker {
+  position: relative;
+  font-family: inherit;
+  width: 100%;
+}
+
+.modern-dt-picker__btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  color: #fff;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+}
+
+.modern-dt-picker__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(125, 190, 255, 0.4);
+}
+
+.modern-dt-picker__icon {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.modern-dt-picker__text {
+  flex: 1;
+}
+
+.modern-dt-picker__popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1000;
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 320px;
+  /* shadcn styling overrides for react-day-picker */
+  --rdp-cell-size: 36px;
+  --rdp-accent-color: #fff;
+  --rdp-background-color: rgba(255, 255, 255, 0.1);
+  --rdp-accent-color-dark: #000;
+  --rdp-background-color-dark: rgba(255, 255, 255, 0.2);
+  --rdp-outline: 2px solid rgba(255, 255, 255, 0.4);
+  --rdp-outline-selected: 2px solid #fff;
+  color: #fff;
+}
+
+.modern-dt-picker__calendar .rdp-day_selected {
+  background-color: #fff;
+  color: #000;
+  font-weight: bold;
+}
+.modern-dt-picker__calendar .rdp-day_selected:hover {
+  background-color: #e0e0e0;
+}
+.modern-dt-picker__calendar .rdp-day:hover:not(.rdp-day_selected) {
+  background-color: rgba(255,255,255,0.1);
+}
+
+.modern-dt-picker__time-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modern-dt-picker__time-wrap svg {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.modern-dt-picker__time-input {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  outline: none;
+  flex: 1;
+}
+.modern-dt-picker__time-input::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+}
+
+.modern-dt-picker__close {
+  padding: 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: #000;
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.modern-dt-picker__close:hover {
+  background: #f0f0f0;
+}

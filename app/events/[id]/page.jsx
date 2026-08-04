@@ -33,6 +33,7 @@ const EventDetailPage = () => {
   const [result, setResult] = useState(null);
   const { data: session } = useSession();
   const [isRegistered, setIsRegistered] = useState(false);
+  const [showPoster, setShowPoster] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -161,15 +162,23 @@ const EventDetailPage = () => {
         {event.posterUrl && <meta property="og:image" content={event.posterUrl} />}
       </Helmet>
 
-      <div style={{ position: 'absolute', top: 130, left: '4%', zIndex: 10 }}>
-        <BackButton />
-      </div>
+      <BackButton />
 
       <div className="event-detail__hero">
         {event.posterUrl && (
-          <div className="event-detail__poster-wrap">
-            <img src={event.posterUrl} alt={event.title} className="event-detail__poster" />
-          </div>
+          <>
+            <div className="event-detail__poster-wrap" onClick={() => setShowPoster(true)}>
+              <img src={event.posterUrl} alt={event.title} className="event-detail__poster" />
+            </div>
+            {showPoster && (
+              <div className="event-poster-modal" onClick={() => setShowPoster(false)}>
+                <div className="event-poster-modal__content" onClick={e => e.stopPropagation()}>
+                  <img src={event.posterUrl} alt={event.title} className="event-poster-modal__img" />
+                  <button className="event-poster-modal__close" onClick={() => setShowPoster(false)}>✕</button>
+                </div>
+              </div>
+            )}
+          </>
         )}
         <div className="event-detail__badges">
           <span

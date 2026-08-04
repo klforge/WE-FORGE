@@ -11,6 +11,7 @@ import memberService, { getAvatarUrl } from '../../../src/services/memberService
 import eventService from '../../../src/services/eventService';
 import noticeService from '../../../src/services/noticeService';
 import projectService from '../../../src/services/projectService';
+import ModernDateTimePicker from '../../../src/components/ModernDateTimePicker';
 import './AdminDashboard.css';
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -212,45 +213,29 @@ const AdminDashboard = () => {
     };
   }, []);
 
-  // ── Password-gate auth (uses JWT cookie from /api/auth/login) ────────
+  // ── Role-based admin auth via Microsoft (NextAuth) ──────────────────
   const [isAdminAuthed, setIsAdminAuthed] = useState(false);
-  const [pwInput, setPwInput]             = useState('');
-  const [pwError, setPwError]             = useState('');
+  const [accessDenied, setAccessDenied]   = useState(false);
 
   useEffect(() => {
-    authService.checkAuth()
-      .then(isAuth => {
-        if (!isAuth) { setLoading(false); return; }
-        return fetch('/api/auth/check')
-          .then(r => r.json())
-          .then(data => {
-            if (data.authenticated) {
-              setAdminInfo(data);
-              setIsAdminAuthed(true);
-              return Promise.all([fetchMembers(), fetchEvents(), fetchNotices(), fetchProjects(), fetchMedia()])
-                .then(() => setLoading(false));
-            }
-            setLoading(false);
-          });
+    fetch('/api/auth/check', { credentials: 'include' })
+      .then(r => r.json())
+      .then(data => {
+        if (data.authenticated) {
+          setAdminInfo(data);
+          setIsAdminAuthed(true);
+          return Promise.all([fetchMembers(), fetchEvents(), fetchNotices(), fetchProjects(), fetchMedia()])
+            .then(() => setLoading(false));
+        } else if (data.signedIn) {
+          // Signed in via Microsoft but wrong role
+          setAccessDenied(true);
+          setLoading(false);
+        } else {
+          setLoading(false);
+        }
       })
       .catch(() => setLoading(false));
   }, []);
-
-  const handleAdminPasswordLogin = async (e) => {
-    e.preventDefault();
-    setPwError('');
-    try {
-      await authService.login(pwInput);
-      setIsAdminAuthed(true);
-      setLoading(true);
-      const data = await fetch('/api/auth/check').then(r => r.json());
-      setAdminInfo(data);
-      await Promise.all([fetchMembers(), fetchEvents(), fetchNotices(), fetchProjects(), fetchMedia()]);
-      setLoading(false);
-    } catch (err) {
-      setPwError(err.message || 'Incorrect password');
-    }
-  };
 
   // ── Members ──────────────────────────────────────────────
 
@@ -330,7 +315,7 @@ const AdminDashboard = () => {
 
   const openAddEvent = () => {
     setEventEditing(null); setEventForm(EMPTY_EVENT_FORM);
-    setEventPoster(null); setEventPosterPreview(null); setShowEventForm(true); setError('');
+    setEventPoster(null); setEventPosterPreview(null); setCrop(undefined); setCompletedCrop(null); setShowEventForm(true); setError('');
   };
   const openEditEvent = (ev) => {
     setEventEditing(ev.id);
@@ -350,9 +335,9 @@ const AdminDashboard = () => {
       roles: ev.roles || ['Participant', 'Volunteer', 'Organizer'],
       isRegistrationOpen: ev.isRegistrationOpen ?? true
     });
-    setEventPoster(null); setEventPosterPreview(ev.posterUrl || null); setShowEventForm(true); setError('');
+    setEventPoster(null); setEventPosterPreview(ev.posterUrl || null); setCrop(undefined); setCompletedCrop(null); setShowEventForm(true); setError('');
   };
-  const closeEventForm = () => { setShowEventForm(false); setEventEditing(null); setEventForm(EMPTY_EVENT_FORM); setEventPoster(null); setEventPosterPreview(null); setError(''); };
+  const closeEventForm = () => { setShowEventForm(false); setEventEditing(null); setEventForm(EMPTY_EVENT_FORM); setEventPoster(null); setEventPosterPreview(null); setCrop(undefined); setCompletedCrop(null); setError(''); };
   const handleEventPosterChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -383,7 +368,11 @@ const AdminDashboard = () => {
       fd.append('allowedMembers', JSON.stringify((eventForm.allowedMembers || []).map(String)));
       fd.append('roles', JSON.stringify(eventForm.roles || ['Participant', 'Volunteer', 'Organizer']));
 
-      if (eventPoster) fd.append('poster', eventPoster);
+      if (eventPoster && completedCrop && imgRef.current) {
+        fd.append('poster', await getCroppedBlob(imgRef.current, completedCrop), 'cropped.png');
+      } else if (eventPoster) {
+        fd.append('poster', eventPoster);
+      }
       if (eventEditing) fd.append('id', eventEditing);
 
       if (eventEditing) { await eventService.update(eventEditing, fd); } else { await eventService.create(fd); }
@@ -430,9 +419,9 @@ const AdminDashboard = () => {
 
   // ── Projects ─────────────────────────────────────────────
 
-  const openAddProject = () => { setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setProjectImage(null); setProjectImagePreview(null); setShowProjectForm(true); setError(''); };
-  const openEditProject = (p) => { setProjectEditing(p.id); setProjectForm({ name: p.name, description: p.description, github: p.github, demo: p.demo, technologies: p.technologies.join(', ') }); setProjectImage(null); setProjectImagePreview(p.imageUrl || null); setShowProjectForm(true); setError(''); };
-  const closeProjectForm = () => { setShowProjectForm(false); setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setProjectImage(null); setProjectImagePreview(null); setError(''); };
+  const openAddProject = () => { setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setProjectImage(null); setProjectImagePreview(null); setCrop(undefined); setCompletedCrop(null); setShowProjectForm(true); setError(''); };
+  const openEditProject = (p) => { setProjectEditing(p.id); setProjectForm({ name: p.name, description: p.description, github: p.github, demo: p.demo, technologies: p.technologies.join(', ') }); setProjectImage(null); setProjectImagePreview(p.imageUrl || null); setCrop(undefined); setCompletedCrop(null); setShowProjectForm(true); setError(''); };
+  const closeProjectForm = () => { setShowProjectForm(false); setProjectEditing(null); setProjectForm(EMPTY_PROJECT_FORM); setProjectImage(null); setProjectImagePreview(null); setCrop(undefined); setCompletedCrop(null); setError(''); };
   
   const handleProjectImageChange = (e) => {
     const file = e.target.files[0];
@@ -450,7 +439,11 @@ const AdminDashboard = () => {
       if (projectForm.github) fd.append('github', projectForm.github.trim());
       if (projectForm.demo) fd.append('demo', projectForm.demo.trim());
       fd.append('technologies', JSON.stringify(projectForm.technologies.split(',').map(t => t.trim()).filter(Boolean)));
-      if (projectImage) fd.append('image', projectImage);
+      if (projectImage && completedCrop && imgRef.current) {
+        fd.append('image', await getCroppedBlob(imgRef.current, completedCrop), 'cropped.png');
+      } else if (projectImage) {
+        fd.append('image', projectImage);
+      }
 
       if (projectEditing) { await projectService.update(projectEditing, fd); } else { await projectService.create(fd); }
       closeProjectForm(); await fetchProjects();
@@ -491,32 +484,38 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleLogout = async () => { await authService.logout(); setIsAdminAuthed(false); setPwInput(''); };
+  const handleLogout = async () => { await signOut({ callbackUrl: '/login' }); };
 
   if (loading) return <div className="admin-dash"><div className="admin-dash__loading">Loading...</div></div>;
 
   if (!isAdminAuthed) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
-      <div style={{ width: 380, padding: '48px 40px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, display: 'flex', flexDirection: 'column', gap: 24 }}>
+      <div style={{ width: 400, padding: '48px 40px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 24, display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'center' }}>
+        <Shield size={44} style={{ color: '#fff' }} />
         <div style={{ textAlign: 'center' }}>
-          <Shield size={44} style={{ color: '#fff', marginBottom: 16 }} />
-          <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, margin: 0 }}>Admin Access</h1>
-          <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem', marginTop: 8 }}>Enter the admin password to continue</p>
+          <h1 style={{ color: '#fff', fontSize: '1.5rem', fontWeight: 800, margin: '0 0 8px' }}>Admin Panel</h1>
+          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
+            {accessDenied
+              ? 'Your account does not have admin access. Only Chiefs, Advisors and Zero Order members can access this panel.'
+              : 'Sign in with your KL University Microsoft account. Access is role-based — no password required.'}
+          </p>
         </div>
-        <form onSubmit={handleAdminPasswordLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <input
-            type="password"
-            value={pwInput}
-            onChange={e => setPwInput(e.target.value)}
-            placeholder="Admin password"
-            autoFocus
-            style={{ width: '100%', padding: '14px 18px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, color: '#fff', fontSize: '1rem', outline: 'none', boxSizing: 'border-box' }}
-          />
-          {pwError && <p style={{ color: '#ff4d4d', fontSize: '0.85rem', margin: 0 }}>{pwError}</p>}
-          <button type="submit" className="admin-dash__add-btn" style={{ width: '100%', justifyContent: 'center' }}>
-            Unlock Dashboard
+        {accessDenied ? (
+          <button
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            style={{ width: '100%', padding: '14px', background: 'rgba(255,77,77,0.1)', border: '1px solid rgba(255,77,77,0.3)', borderRadius: 12, color: '#ff6b6b', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Sign out and try another account
           </button>
-        </form>
+        ) : (
+          <button
+            onClick={() => signIn('azure-ad', { callbackUrl: '/admin/dashboard' })}
+            style={{ width: '100%', padding: '14px', background: '#fff', border: 'none', borderRadius: 12, color: '#000', fontSize: '0.95rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}
+          >
+            <img src="https://authjs.dev/img/providers/azure.svg" alt="Microsoft" width={20} />
+            Continue with Microsoft
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1300,15 +1299,15 @@ const AdminDashboard = () => {
 
               <div className="admin-dash__field">
                 <label>Start Time *</label>
-                <input required type="datetime-local" value={eventForm.startTime ? new Date(new Date(eventForm.startTime).getTime() - new Date(eventForm.startTime).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={e => setEventForm({ ...eventForm, startTime: e.target.value })} />
+                <ModernDateTimePicker value={eventForm.startTime} onChange={val => setEventForm({ ...eventForm, startTime: val })} placeholder="Select Start Time" />
               </div>
               <div className="admin-dash__field">
                 <label>End Time *</label>
-                <input required type="datetime-local" value={eventForm.endTime ? new Date(new Date(eventForm.endTime).getTime() - new Date(eventForm.endTime).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={e => setEventForm({ ...eventForm, endTime: e.target.value })} />
+                <ModernDateTimePicker value={eventForm.endTime} onChange={val => setEventForm({ ...eventForm, endTime: val })} placeholder="Select End Time" />
               </div>
               <div className="admin-dash__field">
                 <label>Registration Deadline</label>
-                <input type="datetime-local" value={eventForm.registrationDeadline ? new Date(new Date(eventForm.registrationDeadline).getTime() - new Date(eventForm.registrationDeadline).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''} onChange={e => setEventForm({ ...eventForm, registrationDeadline: e.target.value })} />
+                <ModernDateTimePicker value={eventForm.registrationDeadline} onChange={val => setEventForm({ ...eventForm, registrationDeadline: val })} placeholder="Select Deadline" />
               </div>
 
               <div className="admin-dash__field admin-dash__field--full admin-dash__field--divider"><label className="admin-dash__field-section-label">Advanced Access Control</label></div>
@@ -1421,8 +1420,12 @@ const AdminDashboard = () => {
               <div className="admin-dash__field admin-dash__field--full"><label>Upload Poster (JPEG/PNG/WebP, max 5MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleEventPosterChange} /></div>
               {eventPosterPreview && (
                 <div className="admin-dash__field admin-dash__field--full">
-                  <label>Poster Preview</label>
-                  <img src={eventPosterPreview} alt="Poster preview" className="admin-dash__poster-preview" />
+                  <label>Crop Poster</label>
+                  <div className="admin-dash__crop-area">
+                    <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)}>
+                      <img src={eventPosterPreview} alt="Poster preview" onLoad={onImageLoad} className="admin-dash__crop-img" />
+                    </ReactCrop>
+                  </div>
                 </div>
               )}
             </div>
@@ -1475,8 +1478,12 @@ const AdminDashboard = () => {
               <div className="admin-dash__field admin-dash__field--full"><label>Upload Image (JPEG/PNG/WebP, max 5MB)</label><input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProjectImageChange} /></div>
               {projectImagePreview && (
                 <div className="admin-dash__field admin-dash__field--full">
-                  <label>Image Preview</label>
-                  <img src={projectImagePreview} alt="Project preview" className="admin-dash__poster-preview" />
+                  <label>Crop Image</label>
+                  <div className="admin-dash__crop-area">
+                    <ReactCrop crop={crop} onChange={c => setCrop(c)} onComplete={c => setCompletedCrop(c)}>
+                      <img src={projectImagePreview} alt="Project preview" onLoad={onImageLoad} className="admin-dash__crop-img" />
+                    </ReactCrop>
+                  </div>
                 </div>
               )}
             </div>

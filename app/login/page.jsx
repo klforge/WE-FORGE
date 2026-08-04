@@ -10,8 +10,10 @@ function LoginContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [email, setEmail] = React.useState('');
   const error = searchParams.get('error');
   const isSuspended = error === 'SUSPENDED' || error === 'CallbackRouteError'; 
+  const isLoginError = error && !isSuspended;
 
   if (status === 'authenticated') {
     router.push('/profile');
@@ -29,11 +31,32 @@ function LoginContent() {
         <p className="login-card__subtitle">
           Exclusively for K L University Students. Use your official mail to access your workspace.
         </p>
-
+ 
         <div className="login-card__notice">
           <Mail size={16} />
           <span>Only @kluniversity.in domains allowed</span>
         </div>
+
+        {isLoginError && (
+          <div className="login-card__error" style={{ 
+            background: 'rgba(255, 77, 77, 0.1)', 
+            border: '1px solid rgba(255, 77, 77, 0.2)', 
+            color: '#ff4d4d', 
+            padding: '12px', 
+            borderRadius: '12px', 
+            fontSize: '0.85rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginTop: '16px',
+            lineHeight: '1.4'
+          }}>
+            <AlertCircle size={20} style={{ flexShrink: 0 }} />
+            <span>
+              Login is not working. Please check configuration or try again.
+            </span>
+          </div>
+        )}
 
         {isSuspended && (
           <div className="login-card__error" style={{ 

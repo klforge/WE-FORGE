@@ -112,19 +112,14 @@
 }
 
 .team-page__domain-title {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 900;
   color: #ffffff;
   text-transform: uppercase;
   letter-spacing: 0.2em;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 24px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 99px;
-  backdrop-filter: blur(10px);
 }
 
 

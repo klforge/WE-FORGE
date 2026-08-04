@@ -29,7 +29,9 @@ const cardData = [
     title: 'Core Team',
     description: 'Meet the builders organizing workshops, sprints, and launches.',
     label: 'Team',
-    route: '/team'
+    route: '/team',
+    image: '/images/team.jpg',
+    noLift: true
   },
   {
     color: '#0a0a0a',
@@ -43,7 +45,9 @@ const cardData = [
     title: 'Events & Workshops',
     description: 'Join hackathons, sessions, demos, and collaborative build days.',
     label: 'Events',
-    route: '/events'
+    route: '/events',
+    image: '/images/events weforge.jpeg',
+    noLift: true
   },
   {
     color: '#0a0a0a',
@@ -245,7 +249,7 @@ const MagicBento = ({
   return (
     <BentoCardGrid gridRef={gridRef}>
       {cardData.map((card, index) => {
-        const baseClassName = `magic-bento-card ${textAutoHide ? 'magic-bento-card--text-autohide' : ''} ${enableBorderGlow ? 'magic-bento-card--border-glow' : ''}`;
+        const baseClassName = `magic-bento-card ${textAutoHide ? 'magic-bento-card--text-autohide' : ''} ${enableBorderGlow ? 'magic-bento-card--border-glow' : ''} ${card.noLift ? 'magic-bento-card--no-lift' : ''}`;
         const cardProps = {
           className: baseClassName,
           style: {
@@ -270,6 +274,13 @@ const MagicBento = ({
                 className={`magic-bento-card__inner${card.route ? ' magic-bento-card__inner--clickable' : ''}`}
                 onClick={() => handleCardClick(card)}
               >
+                {card.image && (
+                  <div className="magic-bento-card__image-container">
+                    <img src={card.image} alt={card.title} className="magic-bento-card__image" />
+                    <div className="magic-bento-card__grain"></div>
+                    <div className="magic-bento-card__overlay"></div>
+                  </div>
+                )}
                 <div className="magic-bento-card__header">
                   <div className="magic-bento-card__label">{card.label}</div>
                 </div>
@@ -287,6 +298,13 @@ const MagicBento = ({
               className={`magic-bento-card__inner${card.route ? ' magic-bento-card__inner--clickable' : ''}`}
               onClick={() => handleCardClick(card)}
             >
+              {card.image && (
+                <div className="magic-bento-card__image-container">
+                  <img src={card.image} alt={card.title} className="magic-bento-card__image" />
+                  <div className="magic-bento-card__grain"></div>
+                  <div className="magic-bento-card__overlay"></div>
+                </div>
+              )}
               <div className="magic-bento-card__header">
                 <div className="magic-bento-card__label">{card.label}</div>
               </div>

@@ -264,16 +264,18 @@
 }
 
 .event-card__btn-reg--zap {
-    background: linear-gradient(135deg, #7dbeff, #3b82f6);
+    background: #fff;
     color: #000;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .event-card__btn-reg--zap:hover:not(:disabled) {
-    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+    background: #f0f0f0;
+    transform: translateY(-2px);
 }
 
 .event-card__btn-reg--done {

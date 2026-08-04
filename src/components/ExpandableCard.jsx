@@ -179,6 +179,12 @@ export function ExpandableCard({ cards }) {
               className="expandable-card-item__btn"
               custom={index}
               variants={buttonVariants}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (card.profileLink) {
+                  router.push(card.profileLink);
+                }
+              }}
             >
               View Profile
             </motion.button>

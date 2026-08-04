@@ -27,7 +27,7 @@
   flex-direction: column;
   justify-content: center;
   max-width: 1400px;
-  margin: 0 auto;
+  margin: 0; /* Aligned left */
   width: 100%;
 }
 
@@ -38,12 +38,12 @@
 
 .domains-hero__title-our {
   font-family: 'Dancing Script', cursive;
-  font-size: clamp(3rem, 10vw, 7.5rem);
+  font-size: clamp(4rem, 12vw, 9rem);
   font-weight: 700;
   color: #d9f92e; /* Neon lime */
   position: absolute;
   top: -30%;
-  left: -8%;
+  left: 0;
   z-index: 2;
   transform: rotate(-8deg);
   line-height: 1;
@@ -51,7 +51,7 @@
 }
 
 .domains-hero__title-domains {
-  font-size: clamp(4rem, 16vw, 14rem);
+  font-size: clamp(5rem, 20vw, 18rem);
   font-weight: 900;
   color: #fff;
   line-height: 0.85;
@@ -149,8 +149,7 @@
 /* ── Branching Structure Section ────────────────────── */
 .domains-structure {
   position: relative;
-  min-height: 200vh; /* space for scrolling */
-  padding: 100px 0 200px;
+  padding: 100px 0 100px;
   background: #050508;
 }
 

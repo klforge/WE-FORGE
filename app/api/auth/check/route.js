@@ -3,48 +3,43 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/db";
 import Member from "@/lib/models/Member";
-import { cookies } from 'next/headers';
-import jwt from 'jsonwebtoken';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
-    // ── 1. Check JWT cookie (password-based admin login) ──────────────
-    const cookieStore = await cookies();
-    const adminTokenCookie = cookieStore.get('adminToken');
-    if (adminTokenCookie?.value) {
-        try {
-            jwt.verify(adminTokenCookie.value, process.env.JWT_SECRET);
-            return NextResponse.json({
-                authenticated: true,
-                isElite: true,
-                role: 'Admin',
-                domain: 'Zero Order'
-            });
-        } catch {
-            // token invalid/expired – fall through to NextAuth check
-        }
-    }
+// Roles that are allowed to access the admin panel
+const ADMIN_ROLES = ['President', 'Chief Secretary', 'Treasurer', 'Advisor', 'Chief'];
 
-    // ── 2. Fall back to NextAuth session ──────────────────────────────
+// Domains where the "Chief" role gets full elite access
+const ELITE_DOMAINS = ['Zero Order', 'Advisor'];
+
+export async function GET() {
     const session = await getServerSession(authOptions);
-    if (!session) return NextResponse.json({ authenticated: false });
+    if (!session?.user?.email) {
+        return NextResponse.json({ authenticated: false });
+    }
 
     await connectDB();
-    const member = await Member.findOne({ email: session.user.email });
-    if (!member) return NextResponse.json({ authenticated: false });
-
-    const isChiefOrLead = member.role.toLowerCase().includes('chief') || member.role.toLowerCase().includes('lead');
-    const isElite = member.domain === 'Zero Order' || member.domain === 'Advisor' || isChiefOrLead;
-
-    if (isElite || isChiefOrLead) {
-        return NextResponse.json({
-            authenticated: true,
-            role: member.role,
-            domain: member.domain,
-            isElite
-        });
+    const member = await Member.findOne({ email: session.user.email }).lean();
+    if (!member) {
+        return NextResponse.json({ authenticated: false });
     }
 
-    return NextResponse.json({ authenticated: false });
+    const { role, domain } = member;
+
+    // Check if this role is allowed into admin
+    const isAllowed = ADMIN_ROLES.includes(role);
+    if (!isAllowed) {
+        return NextResponse.json({ authenticated: false, signedIn: true, role, domain });
+    }
+
+    // All allowed roles see everything
+    const isElite = true;
+
+    return NextResponse.json({
+        authenticated: true,
+        role,
+        domain,
+        name: member.name,
+        isElite,
+    });
 }

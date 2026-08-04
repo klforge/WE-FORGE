@@ -5,27 +5,7 @@ async function safeJson(res) {
 }
 
 const authService = {
-  async login(password) {
-    const res = await fetch(`${API_BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ password }),
-    });
-    if (!res.ok) {
-      const data = await safeJson(res);
-      throw new Error(data.error || 'Login failed');
-    }
-    return safeJson(res);
-  },
-
-  async logout() {
-    await fetch(`${API_BASE}/auth/logout`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-  },
-
+  // Check if the current Microsoft session has admin access
   async checkAuth() {
     try {
       const res = await fetch(`${API_BASE}/auth/check`, { credentials: 'include' });
@@ -34,6 +14,11 @@ const authService = {
     } catch {
       return false;
     }
+  },
+
+  // No-op — logout is handled by NextAuth signOut() in the dashboard
+  async logout() {
+    // Use next-auth signOut() directly on the client side
   },
 };
 
